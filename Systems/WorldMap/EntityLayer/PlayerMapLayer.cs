@@ -66,7 +66,6 @@ namespace Vintagestory.GameContent
         {
             if (!Active || capi == null || ownPlayerTexture == null || otherPlayerTexture == null) return;
 
-            bool hideOtherPlayers = capi.World.Config.GetBool("mapHideOtherPlayers");
             Vec2f viewPos = new();
             Vec3d worldPos = new();
             Matrixf mvMat = new();
@@ -80,13 +79,9 @@ namespace Vintagestory.GameContent
 
             capi.Render.GlToggleBlend(true);
 
-            var mapPlayer = capi.World.Player;
-            var trackedPositions = playerTracking.GetAllTrackedPlayerPositions();
-            foreach (PacketPlayerPosition position in trackedPositions)
+            foreach (PacketPlayerPosition position in playerTracking.GetAllTrackedPlayerPositions())
             {
-                if (hideOtherPlayers && position.PlayerUid != mapPlayer.PlayerUID) continue;
-                if (position.AssociatedPlayer == null) continue;
-                IPlayer player = position.AssociatedPlayer;
+                if (position.AssociatedPlayer is not IClientPlayer player) continue;
 
                 if (player.Entity == null)
                 {
@@ -114,7 +109,7 @@ namespace Vintagestory.GameContent
                 float x = (float)(map.Bounds.renderX + viewPos.X);
                 float y = (float)(map.Bounds.renderY + viewPos.Y);
 
-                LoadedTexture tex = player == mapPlayer ? ownPlayerTexture : otherPlayerTexture;
+                LoadedTexture tex = player == capi.World.Player ? ownPlayerTexture : otherPlayerTexture;
 
                 prog.BindTexture2D("tex2d", tex.TextureId, 0);
 
@@ -139,15 +134,13 @@ namespace Vintagestory.GameContent
             Vec2f viewPos = new();
             Vec3d worldPos = new();
 
-            foreach (IPlayer player in capi.World.AllOnlinePlayers)
+            foreach (PacketPlayerPosition position in playerTracking.GetAllTrackedPlayerPositions())
             {
-                // This entity isn't being tracked, get it from the tracking system.
+                if (position.AssociatedPlayer is not IClientPlayer player) continue;
+
                 if (player.Entity == null)
                 {
-                    PacketPlayerPosition? pos = playerTracking.GetPlayerPositionInformation(player.PlayerUID);
-                    if (pos == null) continue;
-
-                    worldPos.Set(pos.PosX, 0, pos.PosZ);
+                    worldPos.Set(position.PosX, 0, position.PosZ);
                 }
                 else
                 {
@@ -162,8 +155,7 @@ namespace Vintagestory.GameContent
 
                 if (Math.Abs(viewPos.X - mouseX) < sc && Math.Abs(viewPos.Y - mouseY) < sc)
                 {
-                    hoverText.Append("Player ");
-                    hoverText.AppendLine(player.PlayerName);
+                    hoverText.AppendLine(Lang.Get("worldmap-label-player", player.PlayerName));
                 }
             }
         }

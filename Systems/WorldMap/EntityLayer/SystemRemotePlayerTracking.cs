@@ -53,6 +53,9 @@ namespace Vintagestory.GameContent
             return trackedPlayerPackets.GetValueOrDefault(uid);
         }
 
+        /// <summary>
+        /// Return every currently tracked position on the client.
+        /// </summary>
         public IEnumerable<PacketPlayerPosition> GetAllTrackedPlayerPositions()
         {
             return trackedPlayerPackets.Values;
@@ -60,14 +63,14 @@ namespace Vintagestory.GameContent
 
         public override void StartPre(ICoreAPI api)
         {
-            channel = api.Network.RegisterChannel("rpt");
+            channel = api.Network.RegisterChannel("remoteplayertracker");
             channel.RegisterMessageType<PacketPlayerPosition>();
 
             this.api = api;
 
             switch (api)
             {
-                case ICoreServerAPI sapi when !api.World.Config.GetBool("mapHideOtherPlayers"):
+                case ICoreServerAPI sapi when api.World.Config.GetBool("allowMap"):
                     sapi.Event.PlayerJoin += ServerEvent_PlayerJoin;
                     sapi.Event.PlayerLeave += ServerEvent_PlayerLeave;
 
@@ -76,8 +79,7 @@ namespace Vintagestory.GameContent
                 case ICoreClientAPI:
                     ((IClientNetworkChannel)channel).SetMessageHandler<PacketPlayerPosition>(p =>
                     {
-                        IPlayer? player = api.World.PlayerByUid(p.PlayerUid);
-                        if (player == null) return;
+                        if (string.IsNullOrEmpty(p.PlayerUid)) return;
 
                         if (p.Despawn)
                         {
@@ -85,7 +87,7 @@ namespace Vintagestory.GameContent
                             return;
                         }
 
-                        p.AssociatedPlayer = player;
+                        p.AssociatedPlayer = api.World.PlayerByUid(p.PlayerUid);
                         trackedPlayerPackets[p.PlayerUid] = p;
                     });
                     break;
@@ -96,48 +98,67 @@ namespace Vintagestory.GameContent
         {
             if (playerQueue.Count == 0) return;
 
-            double playerRenderDistance = api.World.Config.GetFloat("mapPlayerRenderDistance", 1000);
-            bool showGroupPlayers = api.World.Config.GetBool("mapShowGroupPlayers", true);
-
             IServerPlayer player = playerQueue.Dequeue();
 
             if (player.Entity != null && player.ConnectionState == EnumClientState.Playing)
             {
-                PacketPlayerPosition packet = new()
-                {
-                    PlayerUid = player.PlayerUID,
-                    PosX = player.Entity.Pos.X,
-                    PosZ = player.Entity.Pos.Z,
-                    Yaw = player.Entity.Pos.Yaw
-                };
-
-                PacketPlayerPosition despawnPacket = new()
-                {
-                    PlayerUid = player.PlayerUID,
-                    Despawn = true
-                };
-
-                // Hide spectators.
-                bool globalDespawn = player.WorldData.CurrentGameMode == EnumGameMode.Spectator;
-                string[] ourGroups = player.GetGroups().Select(group => group.GroupName).ToArray();
-
-                foreach (IPlayer playerToReceive in api.World.AllOnlinePlayers)
-                {
-                    if (playerToReceive.Entity == null) continue;
-
-                    // Check whether this player should appear for the player who will receive the packet
-                    if (globalDespawn || (playerToReceive.Entity.Pos.DistanceTo(player.Entity.Pos) > playerRenderDistance &&
-                        (!showGroupPlayers || ourGroups.Length == 0 || !playerToReceive.Groups.Any(group => ourGroups.Contains(group.GroupName)))))
-                    {
-                        ((IServerNetworkChannel)channel).SendPacket(despawnPacket, (IServerPlayer)playerToReceive);
-                        continue;
-                    }
-
-                    ((IServerNetworkChannel)channel).SendPacket(packet, (IServerPlayer)playerToReceive);
-                }
+                sendPlayerPacket(player);
             }
 
             playerQueue.Enqueue(player);
+        }
+
+        private void sendPlayerPacket(IServerPlayer player)
+        {
+            var playerPos = player.Entity.Pos;
+            PacketPlayerPosition packet = new()
+            {
+                PlayerUid = player.PlayerUID,
+                PosX = playerPos.X,
+                PosZ = playerPos.Z,
+                Yaw = playerPos.Yaw
+            };
+
+            PacketPlayerPosition despawnPacket = new()
+            {
+                PlayerUid = player.PlayerUID,
+                Despawn = true
+            };
+
+            ((IServerNetworkChannel)channel).SendPacket(packet, player); // Always track the  client player
+
+            // We only show the player to themselves if they're in spectator mode or hide other players is on
+            if (api.World.Config.GetBool("mapHideOtherPlayers") || player.WorldData.CurrentGameMode == EnumGameMode.Spectator)
+            {
+                ((IServerNetworkChannel)channel).BroadcastPacket(despawnPacket, player);
+                return;
+            }
+
+            double playerRenderDistance = api.World.Config.GetFloat("mapPlayerRenderDistance", 1000);
+
+            if (playerRenderDistance < 0) // We know that all players will see this player
+            {
+                ((IServerNetworkChannel)channel).BroadcastPacket(packet, player);
+                return;
+            }
+
+            int[] ourGroups = player.Groups.Select(group => group.GroupUid).ToArray();
+            bool shouldCheckGroups = api.World.Config.GetBool("mapShowGroupPlayers", true) && ourGroups.Length > 0;
+
+            foreach (var playerToReceive in api.World.AllOnlinePlayers.Cast<IServerPlayer>())
+            {
+                if (playerToReceive.PlayerUID == player.PlayerUID) continue;
+
+                // Check whether the player who will receive the packet can track this player
+                if (playerToReceive.Entity?.Pos.HorDistanceTo(playerPos) <= playerRenderDistance ||
+                    (shouldCheckGroups && playerToReceive.Groups.Any(group => ourGroups.Contains(group.GroupUid))))
+                {
+                    ((IServerNetworkChannel)channel).SendPacket(packet, playerToReceive);
+                    continue;
+                }
+
+                ((IServerNetworkChannel)channel).SendPacket(despawnPacket, playerToReceive);
+            }
         }
 
         private void ServerEvent_PlayerJoin(IServerPlayer byPlayer)
@@ -147,13 +168,11 @@ namespace Vintagestory.GameContent
 
         private void ServerEvent_PlayerLeave(IServerPlayer byPlayer)
         {
-            for (int i = playerQueue.Count; i-- > 0;)
+            for (int i = playerQueue.Count; i > 0; i--)
             {
                 IServerPlayer sp = playerQueue.Dequeue();
-                if (sp.PlayerUID != byPlayer.PlayerUID)
-                {
-                    playerQueue.Enqueue(sp);
-                }
+                if (sp.PlayerUID == byPlayer.PlayerUID) break;
+                playerQueue.Enqueue(sp);
             }
 
             PacketPlayerPosition packet = new()

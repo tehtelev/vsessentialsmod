@@ -118,6 +118,7 @@ namespace Vintagestory.GameContent
         protected const string iconPickerId = "iconPicker";
         protected const string nameInputId = "nameInput";
         protected const string saveButtonId = "saveButton";
+        protected const string autoSuggestSwitchId = "autoSuggestSwitch";
         protected const string pinnedSwitchId = "pinnedSwitch";
         protected const string savedNamesFileName = "waypoints-names.json";
         protected const string nameSuggestionPrefix = "wpSuggestion";
@@ -134,6 +135,7 @@ namespace Vintagestory.GameContent
         protected bool currentNameWasSuggested = false;
         protected int lastSuggestedNameLength = 0;
         protected bool ignoreNextOnNameChanged = false;
+        protected bool autoSuggestSavedNames = true;
 
 
         protected void GetIconsAndColors(WaypointMapLayer mapLayer)
@@ -177,6 +179,9 @@ namespace Vintagestory.GameContent
                     .AddStaticText(Lang.Get("Pinned"), CairoFont.WhiteSmallText(), leftColumn = leftColumn.BelowCopy(0, 9))
                     .AddSwitch(OnPinnedToggled, rightColumn.BelowCopy(0, 5).WithFixedWidth(200), pinnedSwitchId)
 
+                    .AddStaticText(Lang.Get("Suggest saved"), CairoFont.WhiteSmallText(), leftColumn.RightCopy(50, 0).WithFixedWidth(140))
+                    .AddSwitch(OnAutoSuggestToggled, leftColumn.RightCopy(170, -4).WithFixedWidth(40), autoSuggestSwitchId)
+
                     .AddRichtext(Lang.Get("waypoint-color"), CairoFont.WhiteSmallText(), leftColumn = leftColumn.BelowCopy(0, 5))
                     .AddColorListPicker(colors, OnColorSelected, leftColumn = leftColumn.BelowCopy(0, 5).WithFixedSize(colorIconSize, colorIconSize), 270, colorPickerId)
 
@@ -191,7 +196,7 @@ namespace Vintagestory.GameContent
             SingleComposer.Compose();
 
             SingleComposer.GetButton(saveButtonId).Enabled = false;
-
+            SingleComposer.GetSwitch(autoSuggestSwitchId).SetValue(autoSuggestSavedNames);
             SingleComposer.ColorListPickerSetValue(colorPickerId, 0);
             SingleComposer.IconListPickerSetValue(iconPickerId, 0);
         }
@@ -230,6 +235,12 @@ namespace Vintagestory.GameContent
 
         }
 
+        protected virtual void OnAutoSuggestToggled(bool on)
+        {
+            autoSuggestSavedNames = on;
+            SetToolTipText();
+        }
+
         protected virtual void AutoSuggestName()
         {
             if (!autoSuggest) return;
@@ -239,12 +250,15 @@ namespace Vintagestory.GameContent
             ignoreNextAutosuggestDisable = true;
             currentNameWasSuggested = true;
 
-            string? savedName = TryGetSelectedSavedName();
-            if (savedName != null)
+            if (autoSuggestSavedNames)
             {
-                lastSuggestedNameLength = savedName.Length;
-                nameInputElement.SetValue(savedName);
-                return;
+                string? savedName = TryGetSelectedSavedName();
+                if (savedName != null)
+                {
+                    lastSuggestedNameLength = savedName.Length;
+                    nameInputElement.SetValue(savedName);
+                    return;
+                }
             }
 
             if (Lang.HasTranslation(nameSuggestionPrefix + "-" + selectedIcon + "-" + selectedColor))
@@ -319,7 +333,7 @@ namespace Vintagestory.GameContent
 
                 string? waypointName = TryGetSavedName(selectedIcon, ColorUtil.Int2Hex(colors[colorIndex]));
 
-                if (waypointName != null)
+                if (waypointName != null && autoSuggestSavedNames)
                 {
                     picker.ShowToolTip = true;
                     picker.TooltipText = waypointName;
@@ -383,7 +397,7 @@ namespace Vintagestory.GameContent
                 currentNameWasSuggested = false;
             }
 
-            if (newName.Length < lastSuggestedNameLength)
+            if (lastSuggestedNameLength != 0 && newName.Length != lastSuggestedNameLength)
             {
                 GuiElementTextInput nameInputElement = SingleComposer.GetTextInput(nameInputId);
                 lastSuggestedNameLength = 0;
