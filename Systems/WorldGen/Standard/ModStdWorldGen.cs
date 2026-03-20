@@ -18,14 +18,6 @@ namespace Vintagestory.ServerMods
     public interface IStructureProvider
     {
         /// <summary>
-        /// Returns structure if should block generation of given category of blocks at this location (3D search)
-        /// </summary>
-        /// <param name="pos"></param>
-        /// <param name="category">Set to -1 to not check category</param>
-        /// <returns></returns>
-        //IStructureLocation GetBlockingStructureAt(BlockPos pos, int category);
-
-        /// <summary>
         /// Returns structure if should deny generation of given category of blocks at this location. Ignores Y-Coordinate
         /// </summary>
         /// <param name="x"></param>

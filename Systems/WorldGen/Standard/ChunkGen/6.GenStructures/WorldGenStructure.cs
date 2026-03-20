@@ -90,8 +90,6 @@ namespace Vintagestory.ServerMods
                 foreach (var category in SkipGenerationCategories)
                 {
                     int key = BitConverter.ToInt32(SHA256.HashData(Encoding.UTF8.GetBytes(category.Key.ToLowerInvariant())));
-                    // Clears only bit 31
-                    key &= 0x7FFFFFFF;
                     SkipGenerationFlags.Add(key, category.Value);
                 }
             }

@@ -7,7 +7,6 @@ using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
-using Vintagestory.GameContent;
 using Vintagestory.ServerMods.NoObf;
 
 #nullable disable
@@ -385,7 +384,6 @@ namespace Vintagestory.ServerMods
                     if (locationCode != null)
                     {
                         location = GetIntersectingStructure(chunkX * chunksize + chunksize / 2, chunkZ * chunksize + chunksize / 2) as StoryStructureLocation;
-
                         if (location.SchematicsSpawned?.TryGetValue(struc.Group, out var spawnedSchematics) == true && spawnedSchematics >= struc.StoryLocationMaxAmount)
                         {
                             continue;
