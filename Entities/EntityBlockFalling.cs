@@ -206,7 +206,7 @@ namespace Vintagestory.GameContent
         // Positions that already have a pending request — prevents duplicates
         private static HashSet<BlockPos> pendingPositions = new HashSet<BlockPos>();
         // Maximum number of concurrently existing EntityBlockFalling instances
-        private static int maxFallingBlocks;
+        public static int maxFallingBlocks;
         private static ICoreServerAPI sapi;
         // Radius around a player within which entities are created (in blocks)
         private static int activeRange = 128;
