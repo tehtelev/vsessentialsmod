@@ -308,8 +308,12 @@ namespace Vintagestory.GameContent
                 damageEffect = Math.Max(0, 1 - (float)stack.Collectible.GetRemainingDurability(stack) / stack.Collectible.GetMaxDurability(stack) * 1.1f);
             }
 
-            entityShape.RemoveElements(iatta.GetDisableElements(stack));
-
+            var disableElements = iatta.GetDisableElements(stack);
+            if (disableElements != null)
+            {
+                willDeleteElements = willDeleteElements.Append(disableElements);
+                entityShape.RemoveElements(disableElements);
+            }
             var keepEles = iatta.GetKeepElements(stack);
             if (keepEles != null && willDeleteElements != null)
             {

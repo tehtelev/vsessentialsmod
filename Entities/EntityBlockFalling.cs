@@ -9,11 +9,169 @@ using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
+using Vintagestory.API.Util;
 
 #nullable disable
 
 namespace Vintagestory.GameContent
 {
+    public class ModSystemRenderFallingBlocksFast : ModSystem, IRenderer, ITerrainMeshPool
+    {
+        public double RenderOrder => 0.4;
+        public int RenderRange => 150;
+        public Dictionary<long, EntityBlockFalling> fallingBlocks = new Dictionary<long, EntityBlockFalling>();
+
+        protected EntityPartitioning ep;
+        protected ICoreClientAPI capi;
+        protected int plrDim;
+        protected Vec3d plrPos;
+        protected float viewDistSq = 150 * 150;
+        protected Matrixf ModelMat = new Matrixf();
+        protected double rotaccum = 0;
+        protected MeshData mesh = new MeshData(4, 3, false, true, true, true);
+
+        public override bool ShouldLoad(EnumAppSide forSide) => forSide == EnumAppSide.Client;
+
+        public override void StartClientSide(ICoreClientAPI api)
+        {
+            this.capi = api;
+            api.Event.RegisterRenderer(this, EnumRenderStage.Opaque, "renderfallingblocks");
+            api.Event.LeaveWorld += Event_LeaveWorld;
+            ep = api.ModLoader.GetModSystem<EntityPartitioning>();
+        }
+
+        private void Event_LeaveWorld()
+        {
+            var dict = ObjectCacheUtil.TryGet< Dictionary<string, MultiTextureMeshRef>>(capi, "fallingblockmeshrefs");
+            if (dict == null) return;
+            foreach (var val in dict) val.Value.Dispose();
+        }
+
+        public void OnRenderFrame(float deltaTime, EnumRenderStage stage)
+        {
+            if (fallingBlocks.Count == 0) return;
+
+            rotaccum += deltaTime;
+
+            IRenderAPI rapi = capi.Render;
+            rapi.GlDisableCullFace();
+            rapi.GlToggleBlend(true, EnumBlendMode.Standard);
+            IStandardShaderProgram prog = rapi.PreparedStandardShader(0,0,0);
+            prog.ViewMatrix = rapi.CameraMatrixOriginf;
+            prog.ProjectionMatrix = rapi.CurrentProjectionMatrix;
+
+            Vec3d camPos = capi.World.Player.Entity.CameraPos;
+            plrDim = capi.World.Player.Entity.Pos.Dimension;
+            plrPos = capi.World.Player.Entity.Pos.XYZ;
+
+            Vec3d curPos = new Vec3d();
+            
+
+            foreach (var entity in fallingBlocks.Values)
+            {
+                if (!IsRendered(entity)) continue;
+                if (entity.meshRef == null)
+                {
+                    genMesh(entity);
+                }
+
+                Vec4f lightrgbs = capi.World.BlockAccessor.GetLightRGBs((int)entity.Pos.X, (int)entity.Pos.Y, (int)entity.Pos.Z);
+                prog.RgbaLightIn = lightrgbs;
+
+                curPos.Set(entity.Pos.X + entity.SelectionBox.X1, entity.Pos.Y + entity.SelectionBox.Y1, entity.Pos.Z + entity.SelectionBox.Z1);
+
+                float div = entity.Collided ? 4f : 1.5f;
+
+                double rotaccumThis = rotaccum + (entity.EntityId.GetHashCode() % 1000) / 1000f * GameMath.TWOPI;
+
+                prog.ModelMatrix = ModelMat
+                    .Identity()
+                    .Translate(
+                        curPos.X - camPos.X + GameMath.Sin(capi.InWorldEllapsedMilliseconds / 120f + 30) / 20f / div,
+                        curPos.Y - camPos.Y,
+                        curPos.Z - camPos.Z + GameMath.Cos(capi.InWorldEllapsedMilliseconds / 110f + 20) / 20f / div
+                    )
+                    .RotateX((float)(Math.Sin(rotaccumThis * 10) / 10.0 / div))
+                    .RotateZ((float)(Math.Cos(10 + rotaccumThis * 9.0) / 10.0 / div))
+                    .Values
+                ;
+
+                rapi.RenderMultiTextureMesh(entity.meshRef, "tex");
+            }
+
+            prog.Stop();
+        }
+
+        private void genMesh(EntityBlockFalling entity)
+        {
+            if (!entity.InitialBlockRemoved)
+            {
+                int posx = entity.blockEntityAttributes?.GetInt("posx", entity.initialPos.X) ?? entity.initialPos.X;
+                int posy = entity.blockEntityAttributes?.GetInt("posy", entity.initialPos.Y) ?? entity.initialPos.Y;
+                int posz = entity.blockEntityAttributes?.GetInt("posz", entity.initialPos.Z) ?? entity.initialPos.Z;
+
+                BlockEntity be = capi.World.BlockAccessor.GetBlockEntity(new BlockPos(posx, posy, posz));
+                be?.OnTesselation(this, capi.Tesselator);
+
+                if (mesh.VerticesCount > 0)
+                {
+                    mesh.CustomBytes = null;
+                    mesh.CustomFloats = null;
+                    mesh.CustomInts = null;
+                    entity.meshRef = capi.Render.UploadMultiTextureMesh(mesh);
+                }
+            }
+
+            if (entity.meshRef == null)
+            {
+                var dict = ObjectCacheUtil.GetOrCreate(capi, "fallingblockmeshrefs", () => new Dictionary<string, MultiTextureMeshRef>());
+
+                entity.reusedMeshRef = true;
+
+                if (!dict.TryGetValue(entity.Block.Code, out entity.meshRef))
+                {
+                    MeshData mesh = capi.TesselatorManager.GetDefaultBlockMesh(entity.Block);
+                    dict[entity.Block.Code] = entity.meshRef = capi.Render.UploadMultiTextureMesh(mesh);
+                }
+            }
+        }
+
+        private bool IsRendered(EntityBlockFalling entity)
+        {
+            if (!entity.DoRender || (!entity.InitialBlockRemoved && entity.World.BlockAccessor.GetBlock(entity.initialPos).Id != 0)) return false;
+
+            return
+                // In view frustum
+                capi.Render.DefaultFrustumCuller.SphereInFrustum((float)entity.Pos.X, (float)entity.Pos.InternalY, (float)entity.Pos.Z, entity.FrustumSphereRadius)
+                // Same dimension as this player
+                && entity.Pos.Dimension == plrDim
+                // Within render distance
+                && (entity.AllowOutsideLoadedRange || (plrPos.HorizontalSquareDistanceTo(entity.Pos.X, entity.Pos.Z) < viewDistSq
+                    // Ourselves or a rendered chunk
+                    //&& (game.WorldMap.IsChunkRendered((int)entity.Pos.X / ClientMain.ClientChunksize, (int)entity.Pos.InternalY / ClientMain.ClientChunksize, (int)entity.Pos.Z / ClientMain.ClientChunksize))
+                ));            
+        }
+
+        #region ITerrainMeshPool
+        public void AddMeshData(MeshData data, int lodlevel = 1)
+        {
+            if (data == null) return;
+            mesh.AddMeshData(data);
+        }
+
+        public void AddMeshData(MeshData data, ColorMapData colormapdata, int lodlevel = 1)
+        {
+            if (data == null) return;
+            mesh.AddMeshData(data);
+        }
+        public void AddMeshData(MeshData data, float[] tfMatrix, int lodLevel = 1)
+        {
+            if (data == null) return;
+            mesh.AddMeshData(data);
+        }
+        #endregion
+    }
+
     public class FallingBlockParticlesModSystem : ModSystem
     {
         public static SimpleParticleProperties dustParticles;
@@ -50,10 +208,10 @@ namespace Vintagestory.GameContent
             bitsParticles.MaxSize = 1.5f;
         }
 
-        ICoreClientAPI capi;
-        HashSet<EntityBlockFalling> fallingBlocks = new HashSet<EntityBlockFalling>();
-        ConcurrentQueue<EntityBlockFalling> toRegister = new ConcurrentQueue<EntityBlockFalling>();
-        ConcurrentQueue<EntityBlockFalling> toRemove = new ConcurrentQueue<EntityBlockFalling>();
+        protected ICoreClientAPI capi;
+        public HashSet<EntityBlockFalling> fallingBlocks = new HashSet<EntityBlockFalling>();
+        protected ConcurrentQueue<EntityBlockFalling> toRegister = new ConcurrentQueue<EntityBlockFalling>();
+        protected ConcurrentQueue<EntityBlockFalling> toRemove = new ConcurrentQueue<EntityBlockFalling>();
 
         public override bool ShouldLoad(EnumAppSide forSide)
         {
@@ -165,7 +323,7 @@ namespace Vintagestory.GameContent
     public class EntityBlockFalling : Entity
     {
         private const int packetIdMagicNumber = 1234;
-        static HashSet<long> fallingNow = new HashSet<long>();
+        public static HashSet<long> fallingNow = new HashSet<long>();
 
         private readonly List<int> fallDirections = new() { 0, 1, 2, 3 };
         private int lastFallDirection = 0;
@@ -198,6 +356,11 @@ namespace Vintagestory.GameContent
         // Additional config options
         public bool DoRemoveBlock = true;
         public float maxSpawnHeightForParticles = 1.4f;
+        public bool DoRender;
+        public MultiTextureMeshRef meshRef;
+        public bool reusedMeshRef;
+
+        EntityPartitioning ep;
 
         public EntityBlockFalling() { }
         public override float MaterialDensity => 99999;
@@ -232,6 +395,9 @@ namespace Vintagestory.GameContent
 
         public override void Initialize(EntityProperties properties, ICoreAPI api, long InChunkIndex3d)
         {
+            ep = api.ModLoader.GetModSystem<EntityPartitioning>();
+
+
             if (removedBlockentity != null)
             {
                 this.blockEntityAttributes = new TreeAttribute();
@@ -296,6 +462,7 @@ namespace Vintagestory.GameContent
             {
                 particleSys = api.ModLoader.GetModSystem<FallingBlockParticlesModSystem>();
                 particleSys.Register(this);
+                api.ModLoader.GetModSystem<ModSystemRenderFallingBlocksFast>().fallingBlocks[EntityId] = this;
             }
 
             RandomizeFallingDirectionsOrder();
@@ -379,13 +546,10 @@ namespace Vintagestory.GameContent
                 pushaccum = 0;
                 if (!Collided)
                 {
-                    Entity[] entities;
-                    if (Api.Side == EnumAppSide.Server)
-                    {
-                        entities = World.GetEntitiesAround(Pos.XYZ, 1.1f, 1.1f, (e) => !(e is EntityBlockFalling));
-
-                        bool didhit = false;
-                        foreach (var entity in entities)
+                    bool didhit = false;
+                    bool isserver = Api.Side == EnumAppSide.Server;
+                    ep.WalkEntities(Pos.XYZ, 1.1f, entity => {
+                        if (isserver)
                         {
                             bool nowhit = entity.ReceiveDamage(new DamageSource() { Source = EnumDamageSource.Block, Type = EnumDamageType.Crushing, SourceBlock = Block, SourcePos = Pos.XYZ }, 10 * (float)Math.Abs(Pos.Motion.Y) * impactDamageMul);
                             if (nowhit && !didhit)
@@ -394,19 +558,12 @@ namespace Vintagestory.GameContent
                                 Api.World.PlaySoundAt(this.Block.Sounds.Break, entity);
                             }
                         }
-                    }
-                    else
-                    {
-                        entities = World.GetEntitiesAround(Pos.XYZ, 1.1f, 1.1f, (e) => e is EntityPlayer);
-                    }
 
-                    for (int i = 0; i < entities.Length; i++)
-                    {
-                        entities[i].Pos.Motion.Add(fallMotion.X / 10f, 0, fallMotion.Z / 10f);
-                    }
+                        entity.Pos.Motion.Add(fallMotion.X / 10f, 0, fallMotion.Z / 10f);
+                        return true;
+                    }, EnumEntitySearchType.Creatures);
                 }
             }
-
 
             World.FrameProfiler.Mark("entity-tick-unsstablefalling-finalizemotion");
             if (Api.Side == EnumAppSide.Server && !Collided && World.Rand.NextDouble() < 0.01)
@@ -430,8 +587,11 @@ namespace Vintagestory.GameContent
 
             if (Api.World.Side == EnumAppSide.Client)
             {
+                if (!reusedMeshRef) meshRef?.Dispose();
                 fallingNow.Remove(EntityId);
                 particleSys.Unregister(this);
+
+                Api.ModLoader.GetModSystem<ModSystemRenderFallingBlocksFast>().fallingBlocks.Remove(EntityId);
             }
         }
 
@@ -480,8 +640,7 @@ namespace Vintagestory.GameContent
 
         private void OnChunkRetesselated(bool on)
         {
-            EntityBlockFallingRenderer renderer = (Properties.Client.Renderer as EntityBlockFallingRenderer);
-            if (renderer != null) renderer.DoRender = on;
+            DoRender = on;
         }
 
         // based on entitId so should be same on server and client
@@ -643,12 +802,7 @@ namespace Vintagestory.GameContent
 
             if (packetid == packetIdMagicNumber)
             {
-                EntityBlockFallingRenderer renderer = (Properties.Client.Renderer as EntityBlockFallingRenderer);
-                if (renderer != null)
-                {
-                    World.BlockAccessor.MarkBlockDirty(Pos.AsBlockPos, () => OnChunkRetesselated(false));
-                }
-
+                World.BlockAccessor.MarkBlockDirty(Pos.AsBlockPos, () => OnChunkRetesselated(false));
                 lingerTicks = 50;
                 fallHandled = true;
                 nowImpacted = true;

@@ -77,8 +77,8 @@ namespace Vintagestory.GameContent
 
             if (instafleenow) return TryInstaFlee();
 
-            if (intelliFleePaused()) return false;
             if (rand.NextDouble() > ExecutionChance) return false;
+            if (intelliFleePaused()) return false;
             if (noEntityCodes && (attackedByEntity == null || !retaliateAttacks)) return false;
             if (!PreconditionsSatisfied()) return false;
 

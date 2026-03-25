@@ -66,14 +66,13 @@ namespace Vintagestory.GameContent
 
             EntityPos pos = Pos;
 
-            Stuck = Api.Side == EnumAppSide.Server && pos.Motion.LengthSq() < 0.01 * 0.01 && PreviousServerPos.Motion.LengthSq() < 0.01 * 0.01;
-                // radfast notes 14.08.25:
-                // - Collided is not a reliable check here (even if we include beforeCollided to pick up collisions occurring at any point during the previous set of physics ticks, noting that OnCollided() can make the thrown item bounce and therefore cease colliding during the physics update part of the server tick)
-                // - There are false positives: a bouncing stone may have Collided true, but it is not stuck
-                // - There are false negatives: for some reason a stone launched at a very flat angle (aiming at the horizon or just above) after a few bounces can slide along the ground without gravity causing a vertical collision and push-out (possibly because of the epsilon threshold in CollisionTester.cs??)
-                // Conclusion: don't use Collided, instead look for thrown entities which are neither falling nor bouncing
-                // tyron notes 17.11.25
-                // checking for y-motion alone makes some thrown stuck stuck on water. Changed to Motion.Length() with epsilon
+            // This seems to work properly.
+            // Does not work: Testing for Collided (does not trigger always)
+            // Does not work: Testing for motion only (can be 0 in some cases, even while mid-air)
+            Stuck = Api.Side == EnumAppSide.Server
+                && (pos.Motion.LengthSq() < 0.01 * 0.01)
+                && World.CollisionTester.IsColliding(World.BlockAccessor, this.CollisionBox, this.Pos.XYZ, true)
+            ;
 
             if (Stuck)
             {

@@ -429,7 +429,7 @@ namespace Vintagestory.GameContent
 
             return entity.World.GetNearestEntity(entity.Pos.XYZ, requiresNearbyEntityRange, requiresNearbyEntityRange, (e) =>
             {
-                if (e.WildCardMatch(new AssetLocation(requiresNearbyEntityCode)))
+                if (e.Alive && e.WildCardMatch(new AssetLocation(requiresNearbyEntityCode)))
                 {
                     ITreeAttribute tree = e.WatchedAttributes.GetTreeAttribute("hunger");
                     if (!e.WatchedAttributes.GetBool("doesEat") || tree == null) return true;

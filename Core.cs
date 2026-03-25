@@ -36,7 +36,6 @@ namespace Vintagestory.ServerMods
             api.RegisterEntityRendererClass("Item", typeof(EntityItemRenderer));
             api.RegisterEntityRendererClass("Dummy", typeof(EntityRendererInvisible));
 
-            api.RegisterEntityRendererClass("BlockFalling", typeof(EntityBlockFallingRenderer));
             api.RegisterEntityRendererClass("Shape", typeof(EntityShapeRenderer));
             api.RegisterEntityRendererClass("PlayerShape", typeof(EntityPlayerShapeRenderer));
             

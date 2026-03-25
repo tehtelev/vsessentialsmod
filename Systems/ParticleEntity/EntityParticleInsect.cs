@@ -77,7 +77,7 @@ namespace Vintagestory.GameContent
                 return;
             }
 
-            var npe = capi.World.NearestPlayer(Position.X, Position.Y, Position.Z).Entity;
+            var npe = capi.World.NearestPlayer(Position.X, Position.Y, Position.Z)?.Entity;
             double sqdist = 50 * 50;
             if (npe != null && (sqdist=npe.Pos.SquareHorDistanceTo(Position)) < 3*3)
             {

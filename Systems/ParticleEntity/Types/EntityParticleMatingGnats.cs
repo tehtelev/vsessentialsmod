@@ -62,8 +62,8 @@ namespace Vintagestory.GameContent
         {
             base.doSlowTick(physicsSim, dt);
 
-            var npe = capi.World.NearestPlayer(Position.X, Position.Y, Position.Z).Entity;
-            double sqdist = npe.Pos.SquareHorDistanceTo(Position);
+            var npe = capi.World.NearestPlayer(Position.X, Position.Y, Position.Z)?.Entity;
+            double sqdist = npe?.Pos.SquareHorDistanceTo(Position) ?? 9999;
 
             if (sqdist > 10*10)
             {

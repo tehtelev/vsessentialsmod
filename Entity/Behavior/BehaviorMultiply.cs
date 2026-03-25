@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Text;
 using Vintagestory.API.Common;
@@ -261,7 +261,7 @@ namespace Vintagestory.GameContent
 
         protected virtual bool EntityCanMate(Entity e)
         {
-            return !e.WatchedAttributes.GetBool("doesEat") || (e.WatchedAttributes["hunger"] as ITreeAttribute)?.GetFloat("saturation") >= 1;
+            return e.Alive && !e.WatchedAttributes.GetBool("doesEat") || (e.WatchedAttributes["hunger"] as ITreeAttribute)?.GetFloat("saturation") >= 1;
         }
 
         public override void OnEntityDespawn(EntityDespawnData despawn)

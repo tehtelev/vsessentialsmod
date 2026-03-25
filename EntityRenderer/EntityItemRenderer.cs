@@ -2,6 +2,7 @@ using System;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
+using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 
@@ -268,7 +269,8 @@ namespace Vintagestory.GameContent
                 bool freefall = !(entity.Collided || entity.Swimming || capi.IsGamePaused);
                 if (!freefall) touchGroundMS = ellapseMs;
 
-                if (entity.Collided)
+                var stuck = entity.Collided || capi.World.CollisionTester.IsColliding(capi.World.BlockAccessor, entity.CollisionBox, entity.Pos.XYZ, true);
+                if (stuck)
                 {
                     xangle *= 0.55f;
                     yangle *= 0.55f;

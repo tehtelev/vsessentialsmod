@@ -203,7 +203,7 @@ namespace Vintagestory.GameContent
             double radiusSq = radius * radius;
             double nearestDistanceSq = radiusSq;
 
-            if (api.Side == EnumAppSide.Client)
+            if (api is ICoreClientAPI)
             {
                 WalkEntities(position.X, position.Y, position.Z, radius, (e) =>
                 {
