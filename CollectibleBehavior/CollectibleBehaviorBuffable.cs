@@ -124,13 +124,15 @@ namespace Vintagestory.GameContent
 
         public override void OnCreatedByCrafting(ItemSlot[] allInputslots, ItemSlot outputSlot, IRecipeBase byRecipe, ref EnumHandling bhHandling)
         {
-            foreach (var slot in allInputslots)
-            {
-                if (slot.Empty) continue;
-                var stack = slot.Itemstack;
-
-                var collobj = slot.Itemstack.Collectible;
-                applyQuenchableBuffs(outputSlot.Itemstack, slot.Itemstack);
+            var attr = (byRecipe.RecipeOutput as CraftingRecipeIngredient)?.RecipeAttributes;
+            if (attr != null && attr["applyquenchablebuffs"].AsBool() == true) {
+                foreach (var slot in allInputslots)
+                {
+                    if (slot.Empty) continue;
+                    var stack = slot.Itemstack;
+                    var collobj = slot.Itemstack.Collectible;
+                    applyQuenchableBuffs(outputSlot.Itemstack, slot.Itemstack);
+                }
             }
         }
 

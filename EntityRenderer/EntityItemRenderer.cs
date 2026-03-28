@@ -92,7 +92,7 @@ namespace Vintagestory.GameContent
         public override void DoRender3DOpaque(float dt, bool isShadowPass)
         {
             // Optimization: If this item is out of view, lets not render its shadow, since its very likely not gonna contribute to the scene anyway
-            if (isShadowPass && !entity.IsRendered) return;
+            if (isShadowPass && !entity.IsRendered || entityitem.Itemstack == null) return;
 
             if (RunWittySkipRenderAlgorithm)
             {

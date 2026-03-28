@@ -140,16 +140,18 @@ namespace Vintagestory.GameContent
         {
             if (!entity.DoRender || (!entity.InitialBlockRemoved && entity.World.BlockAccessor.GetBlock(entity.initialPos).Id != 0)) return false;
 
-            return
-                // In view frustum
-                capi.Render.DefaultFrustumCuller.SphereInFrustum((float)entity.Pos.X, (float)entity.Pos.InternalY, (float)entity.Pos.Z, entity.FrustumSphereRadius)
-                // Same dimension as this player
-                && entity.Pos.Dimension == plrDim
-                // Within render distance
-                && (entity.AllowOutsideLoadedRange || (plrPos.HorizontalSquareDistanceTo(entity.Pos.X, entity.Pos.Z) < viewDistSq
-                    // Ourselves or a rendered chunk
-                    //&& (game.WorldMap.IsChunkRendered((int)entity.Pos.X / ClientMain.ClientChunksize, (int)entity.Pos.InternalY / ClientMain.ClientChunksize, (int)entity.Pos.Z / ClientMain.ClientChunksize))
-                ));            
+            var entityPos = entity.Pos;
+            // In view frustum
+            if (!capi.Render.DefaultFrustumCuller.SphereInFrustum((float)entityPos.X, (float)entityPos.InternalY, (float)entityPos.Z, entity.FrustumSphereRadius)) return false;
+            // Same dimension as this player
+            if (entityPos.Dimension != plrDim) return false;
+            // Skip distance/render checks for globally loaded entities
+            if (entity.AllowOutsideLoadedRange) return true;
+
+            // Within render distance...
+            if (plrPos.HorizontalSquareDistanceTo(entityPos.X, entityPos.Z) >= viewDistSq) return false;
+            // and chunk is rendered
+            return capi.IsChunkRendered(entityPos);
         }
 
         #region ITerrainMeshPool
