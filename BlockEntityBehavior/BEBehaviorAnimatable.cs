@@ -1,4 +1,5 @@
 using System.Text;
+using Vintagestory.API;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
@@ -7,6 +8,16 @@ using Vintagestory.API.Datastructures;
 
 namespace Vintagestory.GameContent
 {
+    /// <summary>
+    /// Makes block animatable. This behavior has no properties.
+    /// Defined with the "Animatable" code.
+    /// </summary>
+    /// <example><code lang="json">
+    ///"entityBehaviors": [
+    /// { "name": "Animatable" }
+    ///],
+    /// </code></example>
+    [DocumentAsJson]
     public class BEBehaviorAnimatable : BlockEntityBehavior
     {
         public BEBehaviorAnimatable(BlockEntity blockentity) : base(blockentity) { }

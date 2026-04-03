@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using Vintagestory.API;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
@@ -8,6 +9,19 @@ using Vintagestory.API.MathTools;
 
 namespace Vintagestory.GameContent
 {
+    /// <summary>
+    /// Allows entity to rest.
+    /// <br/>Uses the "tiredness" code
+    /// </summary>
+    /// <example><code lang="json">
+    ///"behaviors": [
+    /// {
+    ///     "code": "tiredness",
+    ///     "currenttiredness": 0
+    /// },
+    ///],
+    /// </code></example>
+    [DocumentAsJson]
     public class EntityBehaviorTiredness : EntityBehavior
     {
         public Random Rand;
@@ -16,10 +30,11 @@ namespace Vintagestory.GameContent
 
         long listenerId;
 
-
         /// <summary>
-        /// Tiredness in hours
+        /// <!--<jsonalias>CurrentTiredness</jsonalias>-->
+        /// The entity will have this much tiredness (in in-game hours) upon spawn if this is set in JSON. Otherwise, this is the tiredness of the entity
         /// </summary>
+        [DocumentAsJson("Optional", "0")]
         public float Tiredness
         {
             get { return entity.WatchedAttributes.GetTreeAttribute("tiredness").GetFloat("tiredness"); }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Vintagestory.API;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -12,6 +13,20 @@ using Vintagestory.API.Server;
 
 namespace Vintagestory.GameContent;
 
+/// <summary>
+/// Controlled physics system for entities.
+/// <br/>Uses the "controlledphysics" code
+/// </summary>
+/// <example><code lang="json">
+/// "behaviors": [
+///  {
+///     "code": "controlledphysics"
+///     "stepHeight": 1.1251
+///  }
+/// ]
+/// </code></example>
+[DocumentAsJson]
+[AddDocumentationProperty("physics", "A set of properties used for physics modules", "Vintagestory.API.Datastructures.JsonObject", "Optional", "None", true)]
 public class EntityBehaviorControlledPhysics : PhysicsBehaviorBase, IPhysicsTickable, IRemotePhysics
 {
     protected const double collisionboxReductionForInsideBlocksCheck = 0.009;
@@ -45,13 +60,29 @@ public class EntityBehaviorControlledPhysics : PhysicsBehaviorBase, IPhysicsTick
     protected readonly Vec3d steppingTestMotion = new();
 
     /// <summary>
-    /// For adjusting hitbox to dying enemies.
+    /// Determines max block height the entity can step up without jumping. 1.0 equals a full block
     /// </summary>
+    [DocumentAsJson("Optional", "0.6")]
     public float StepHeight = 0.6f;
+
     public bool Ticking { get; set; }
 
+    /// <summary>
+    /// Speed at which the entity steps up blocks
+    /// </summary>
+    [DocumentAsJson("Optional", "0.07")]
     public float stepUpSpeed = 0.07f;
+
+    /// <summary>
+    /// Upward climbing speed on ladders
+    /// </summary>
+    [DocumentAsJson("Optional", "0.07")]
     public float climbUpSpeed = 0.07f;
+
+    /// <summary>
+    /// Downward climbing speed on ladders
+    /// </summary>
+    [DocumentAsJson("Optional", "0.035")]
     public float climbDownSpeed = 0.035f;
 
     public override bool ThreadSafe { get { return true; } }     // It's threadsafe for a subtle reason: in OnGameTick(), the only entities for which callOnEntityInside() will be called, are exactly those entities physics-ticked on the main thread, i.e. players and player-controlled mounts

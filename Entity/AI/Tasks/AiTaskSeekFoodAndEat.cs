@@ -181,7 +181,7 @@ namespace Vintagestory.GameContent
 
         public override bool ContinueExecute(float dt)
         {
-            //Check if time is still valid for task.
+            // Check if time is still valid for task.
             if (!IsInValidDayTimeHours(false)) return false;
 
             Vec3d pos = targetPoi.Position;
@@ -198,7 +198,7 @@ namespace Vintagestory.GameContent
             if (distance <= minDist)
             {
                 pathTraverser.Stop();
-                if (animMeta != null)
+                if (animMeta != null && entity.AnimManager.IsAnimationActive(animMeta.Code))
                 {
                     entity.AnimManager.StopAnimation(animMeta.Code);
                 }
@@ -294,6 +294,11 @@ namespace Vintagestory.GameContent
             if (eatAnimMeta != null)
             {
                 entity.AnimManager.StopAnimation(eatAnimMeta.Code);
+            }
+
+            if (eatAnimMetaLooseItems != null)
+            {
+                entity.AnimManager.StopAnimation(eatAnimMetaLooseItems.Code);
             }
 
             if (animMeta != null)

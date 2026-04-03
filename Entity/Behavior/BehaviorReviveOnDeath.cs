@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using Vintagestory.API;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
@@ -7,9 +8,32 @@ using Vintagestory.API.Datastructures;
 
 namespace Vintagestory.GameContent
 {
+    /// <summary>
+    /// Revives the entity a period of time after its death.
+    /// <br/>Uses the "reviveondeath" code
+    /// </summary>
+    /// <example><code lang="json">
+    /// "behaviors": [
+    ///  {
+    ///     "code": "reviveondeath"
+    ///     "minHours": 24,
+    ///     "maxHours": 72
+    ///  }
+    /// ]
+    /// </code></example>
+    [DocumentAsJson]
     public class EntityBehaviorReviveOnDeath : EntityBehavior
     {
+        /// <summary>
+        /// Minimum in-game hours until the entity is revived
+        /// </summary>
+        [DocumentAsJson("Optional", "24")]
         float minHours;
+
+        /// <summary>
+        /// Maximum in-game hours until the entity is revived
+        /// </summary>
+        [DocumentAsJson("Optional", "48")]
         float maxHours;
 
         public double DiedTotalHours

@@ -2,6 +2,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Vintagestory.API;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -49,9 +50,58 @@ namespace Vintagestory.GameContent
         }
     }
 
+    /// <summary>
+    /// Makes entity harvestable upon its death.
+    /// <br/>Uses the "harvestable" code
+    /// </summary>
+    /// <example><code lang="json">
+    ///"behaviors": [
+    /// {
+    ///     "code": "harvestable",
+    ///     "quantitySlots": 4,
+    ///     "duration": 2,
+    ///     "fixedweight": true,
+    ///     "drops": [
+    ///         {
+    ///             "type": "item",
+    ///             "code": "gear-temporal",
+    ///             "quantity": { "avg": 0.02666, "var": 0 }
+    ///         },
+    ///         {
+    ///             "type": "item",
+    ///             "code": "flaxfibers",
+    ///             "quantity": { "avg": 0.2, "var": 0 }
+    ///         },
+    ///         {
+    ///             "type": "item",
+    ///             "code": "gear-rusty",
+    ///             "dropModbyStat": "rustyGearDropRate",
+    ///             "quantity": { "avg": 0.01, "var": 0 }
+    ///         }
+    ///     ]
+    /// },
+    ///],
+    ///...
+    ///"attributes": {
+	///  "deathByMultiplier": 0,
+    ///  "isMechanical": false,
+    ///  "killedByInfoText": "deadcreature-killed"
+	///}
+    /// </code></example>
+    [DocumentAsJson]
+    [AddDocumentationProperty("deathByMultiplier", "If an entity is killed by the entity with this attribute, what multiple of drops should this creature yield?", "System.Single", "Optional", "0.4", true)]
+    [AddDocumentationProperty("isMechanical", "If false, drop rates will be affected by \"animalLootDropRate\" character's trait", "System.Boolean", "Optional", "false", true)]
+    [AddDocumentationProperty("killedByInfoText", "If used on the entity that kills this one, this will replace the \"killed by\" text with a specified lang file entry.", "System.String", "Optional", "deadcreature-killed", true)]
+    [AddDocumentationProperty("quantitySlots", "Limits how many item stacks in total can be obtained per single harvest", "System.Int32", "Optional", "4", false)]
     public class EntityBehaviorHarvestable : EntityBehaviorContainer, IHarvestable
     {
         const float minimumWeight = 0.5f;
+
+        /// <summary>
+        /// <!--<jsonalias>drops</jsonalias>-->
+        /// The items obtained upon harvesting. Entity drops are merged with these ones
+        /// </summary>
+        [DocumentAsJson("Required")]
         protected BlockDropItemStack[] jsonDrops;
 
         protected InventoryGeneric inv;
@@ -143,7 +193,11 @@ namespace Vintagestory.GameContent
             return !entity.Alive && !IsHarvested;
         }
 
-
+        /// <summary>
+        /// <!--<jsonalias>duration</jsonalias>-->
+        /// How long it takes to harvest the creature
+        /// </summary>
+        [DocumentAsJson("Optional", "5")]
         float baseHarvestDuration;
         public float GetHarvestDuration(ItemSlot withItem, Entity forEntity)
         {
@@ -195,7 +249,13 @@ namespace Vintagestory.GameContent
         }
 
         bool harshWinters;
+
+        /// <summary>
+        /// Whether the creature has a fixed weight. If false, drop rate will be affected by the current weight of the creature
+        /// </summary>
+        [DocumentAsJson("Optional", "False")]
         bool fixedWeight;
+
         float accum = 0;
 
         public override void OnGameTick(float deltaTime)

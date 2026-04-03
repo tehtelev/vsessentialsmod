@@ -1,4 +1,5 @@
-﻿using Vintagestory.API.Common;
+using Vintagestory.API;
+using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
@@ -7,12 +8,30 @@ using Vintagestory.API.MathTools;
 
 namespace Vintagestory.GameContent
 {
+    /// <summary>
+    /// Decomposes dead entity.
+    /// <br/>Uses the "deaddecay" code
+    /// </summary>
+    /// <example><code lang="json">
+    ///"behaviors": [
+    /// {
+    ///     "code": "deaddecay",
+    ///     "hoursToDecay": 96,
+    ///     "decayedBlock": "carcass-tiny"
+    /// },
+    ///],
+    /// </code></example>
+    [DocumentAsJson]
+    [AddDocumentationProperty("decayedBlock", "The block to spawn after entity is fully decomposed or harvested", "Vintagestory.API.Common.AssetLocation", "Optional", "None", false)]
     public class EntityBehaviorDeadDecay : EntityBehavior
     {
         ITreeAttribute decayTree;
         JsonObject typeAttributes;
 
-
+        /// <summary>
+        /// Determines how many in-game hours since the creature death should pass before it decomposes completely.
+        /// </summary>
+        [DocumentAsJson("Optional", "96")]
         public float HoursToDecay { get; set; }
 
         public double TotalHoursDead

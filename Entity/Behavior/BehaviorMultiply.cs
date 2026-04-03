@@ -1,6 +1,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Text;
+using Vintagestory.API;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
@@ -10,19 +11,78 @@ using Vintagestory.API.Datastructures;
 
 namespace Vintagestory.GameContent
 {
+    /// <summary>
+    /// Allows an entity to get pregnant and give birth.
+    /// <br/>Uses the "multiply" code
+    /// </summary>
+    /// <example><code lang="json">
+    ///"behaviors": [
+    /// {
+    ///     "code": "multiply",
+    ///     "enabledByType": {
+    ///         "*-female": true,
+    ///         "*": false
+    ///     },
+    ///     "spawnEntityCodes": [{ "code": "sheep-{type}-baby-male" }, { "code": "sheep-{type}-baby-female" }],
+    ///     "requiresNearbyEntityCode": "sheep-bighorn-adult-male",
+    ///     "requiresNearbyEntityRange": 10,
+    ///     "spawnQuantityMin": 1,
+    ///     "spawnQuantityMax": 1,
+    ///     "pregnancyDays": 20,
+    ///     "multiplyCooldownDaysMin": 4,
+    ///     "multiplyCooldownDaysMax": 11,
+    ///     "portionsEatenForMultiply": 10
+    /// },
+    ///],
+    /// </code></example>
+    [DocumentAsJson]
+    [AddDocumentationProperty("spawnEntityCode", "Used instead of spawnEntityCodes if the latter is not defined", "System.String", "Optional", "", false)]
     public class EntityBehaviorMultiply : EntityBehaviorMultiplyBase
     {
         long callbackId = 0;
 
+
+        /// <summary>
+        /// The entity codes used to spawn the offspring
+        /// </summary>
+        [DocumentAsJson("Required", "")]
         protected AssetLocation[] SpawnEntityCodes;
 
+        /// <summary>
+        /// Specifies an list of entities required nearby for this entity to be able to get pregnant. Only one needs to match.
+        /// </summary>
+        [DocumentAsJson("Optional", "")]
         [JsonProperty] public AssetLocation[] RequiresNearbyEntityCodes;
-        // <summary> Alternate format for specifying a single code. Can still be used. Ignored if requiresNearbyEntityCodes is set. </summary>
+        
+        /// <summary>
+        /// Specifies an entity required for this entity to be able to get pregnant. Will only set if plural version is not set.
+        /// </summary>
+        [DocumentAsJson("Optional", "")]
         [JsonProperty] private AssetLocation requiresNearbyEntityCode { set => RequiresNearbyEntityCodes ??= [ value ]; }
 
+
+        /// <summary>
+        /// How long the pregnancy should last in in-game days.
+        /// </summary>
+        [DocumentAsJson("Optional", "3")]
         [JsonProperty] public double PregnancyDays = 3;
+
+        /// <summary>
+        /// Specifies the range within which the entity with code defined in <see cref="RequiresNearbyEntityCode"/> should be located in order for this entity to be able to get pregnant
+        /// </summary>
+        [DocumentAsJson("Optional", "5")]
         [JsonProperty] public float RequiresNearbyEntityRange = 5;
+
+        /// <summary>
+        /// How many offspring should be spawned at minimum
+        /// </summary>
+        [DocumentAsJson("Optional", "1")]
         [JsonProperty] public float SpawnQuantityMin = 1;
+
+        /// <summary>
+        /// How many offspring should be spawned at maximum
+        /// </summary>
+        [DocumentAsJson("Optional", "2")]
         [JsonProperty] public float SpawnQuantityMax = 2;
 
         /*internal int GrowthCapQuantity

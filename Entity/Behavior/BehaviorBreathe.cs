@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using Vintagestory.API;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
@@ -8,11 +9,32 @@ using Vintagestory.API.MathTools;
 
 namespace Vintagestory.GameContent
 {
+    /// <summary>
+    /// Makes entity receive damage from suffocation upon depleting its oxygen.
+    /// <br/>Uses the "breathe" code
+    /// </summary>
+    /// <example><code lang="json">
+    ///"behaviors": [
+    /// {
+    ///     "code": "breathe",
+    ///     "maxoxygen": 40000,
+    ///     "currentoxygen": 40000
+    /// },
+    ///],
+    /// </code></example>
+    [DocumentAsJson]
+    [AddDocumentationProperty("asphyxiating", "Use this attribute on a block. Should an entity suffocate if inside of this block?", "System.Boolean", "Optional", "True", true)]
     public class EntityBehaviorBreathe : EntityBehavior
     {
         ITreeAttribute oxygenTree;
 
         private float oxygenCached = -1f;
+
+        /// <summary>
+        /// <!--<jsonalias>CurrentOxygen</jsonalias>-->
+        /// The entity will have this much oxygen level (in milliseconds) upon spawn if this is set in JSON. Otherwise, this is the current oxygen level of the entity
+        /// </summary>
+        [DocumentAsJson("Optional", "MaxOxygen")]
         public float Oxygen
         {
             get { return oxygenCached = oxygenTree.GetFloat("currentoxygen"); }
@@ -28,6 +50,11 @@ namespace Vintagestory.GameContent
         }
 
         private float maxOxygen;
+
+        /// <summary>
+        /// The maximum oxygen level the entity can have (in milliseconds)
+        /// </summary>
+        [DocumentAsJson("Optional", "40000")]
         public float MaxOxygen
         {
             get { return maxOxygen; }

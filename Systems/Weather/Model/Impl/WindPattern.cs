@@ -1,4 +1,4 @@
-﻿using ProtoBuf;
+using ProtoBuf;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 
@@ -48,11 +48,15 @@ namespace Vintagestory.GameContent
 
         public virtual void Update(float dt)
         {
-            if (strengthNoiseGen != null)
+            try
             {
-                double timeAxis = api.World.Calendar.TotalDays * 10;
-                Strength = State.BaseStrength + (float)GameMath.Clamp(strengthNoiseGen.Noise(0, timeAxis), 0, 1);
+                if (strengthNoiseGen != null)
+                {
+                    double timeAxis = api.World.Calendar.TotalDays * 10;
+                    Strength = State.BaseStrength + (float)GameMath.Clamp(strengthNoiseGen.Noise(0, timeAxis), 0, 1);
+                }
             }
+            catch { }    // Silently fail: SimplexNoiseOctave.Evaluate() can produce IndexOutOfRange exceptions in 1.23-dev.0
         }
 
         public virtual string GetWindName()

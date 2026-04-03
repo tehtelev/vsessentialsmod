@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Vintagestory.API;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -12,7 +13,19 @@ using Vintagestory.Client.NoObf;
 
 namespace Vintagestory.GameContent
 {
-
+    /// <summary>
+    /// Allows to define interactable hitboxes directly from entity shape elements.
+    /// <br/>Uses the "selectionboxes" code
+    /// </summary>
+    /// <example><code lang="json">
+    ///"behaviors": [
+    /// {
+    ///  "code": "selectionboxes",
+    ///  "selectionBoxes": ["HeadAP", "FaceAP", "NeckAP", "MidAP", "MidUnderAP", "RearAP", "RearSideAP", "RFrontAP", "LFrontAP", "TempGear1AP", "TempGear2AP", "TempGear3AP"]
+    /// },
+    ///],
+    /// </code></example>
+    [DocumentAsJson]
     public class EntityBehaviorSelectionBoxes : EntityBehavior, IRenderer
     {
         ICoreClientAPI capi;
@@ -23,6 +36,12 @@ namespace Vintagestory.GameContent
         bool rendererRegistered=false;
 
         public AttachmentPointAndPose[] selectionBoxes = Array.Empty<AttachmentPointAndPose>();
+
+        /// <summary>
+        /// <!--<jsonalias>SelectionBoxes</jsonalias>-->
+        /// A list of attachment points from entity shape used to define hitboxes
+        /// </summary>
+        [DocumentAsJson("Required")]
         string[] selectionBoxCodes;
 
         public EntityBehaviorSelectionBoxes(Entity entity) : base(entity) { }

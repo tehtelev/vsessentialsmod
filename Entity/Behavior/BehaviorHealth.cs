@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Vintagestory.API;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -66,6 +67,25 @@ public class DamageOverTimeEffect
     }
 }
 
+/// <summary>
+/// Adds health calculations to entity so that it can receive damage, die, get revived and get healed.
+/// <br/>Uses the "health" code
+/// </summary>
+/// <example><code lang="json">
+///"behaviors": [
+/// {
+///     "code": "health",
+///     "currenthealth": 15.0,
+///     "maxhealth": 15.0
+/// },
+///],
+///...
+///"attributes": {
+///  "minGenerationToAllowHealing": 1
+///}
+/// </code></example>
+[DocumentAsJson]
+[AddDocumentationProperty("minGenerationToAllowHealing", "If this is an animal, specifies the minimum generation required to be healed by player. Ignored if -1", "System.Int32", "Optional", "-1", true)]
 public class EntityBehaviorHealth : EntityBehavior
 {
     // Experimentally determined - at 3.5 blocks the player has a motion of -0.19
@@ -74,6 +94,11 @@ public class EntityBehaviorHealth : EntityBehavior
 
     public event OnDamagedDelegate onDamaged = (dmg, dmgSource) => dmg;
 
+    /// <summary>
+    /// <!--<jsonalias>CurrentHealth</jsonalias>-->
+    /// The entity will have this much health points upon spawn if this is set in JSON. Otherwise, these are the health points of the entity
+    /// </summary>
+    [DocumentAsJson("Optional", "MaxHealth")]
     public float Health
     {
         get { return healthTree.GetFloat("currenthealth"); }
@@ -118,6 +143,10 @@ public class EntityBehaviorHealth : EntityBehavior
         }
     }
 
+    /// <summary>
+    /// Max possible health points the entity can have. Can be affected by "maxhealthExtraPoints" character's trait
+    /// </summary>
+    [DocumentAsJson("Recommended", "20")]
     public float MaxHealth
     {
         get { return healthTree.GetFloat("maxhealth"); }
@@ -144,21 +173,25 @@ public class EntityBehaviorHealth : EntityBehavior
     /// <summary>
     /// Should entity receive hail damage. By default only players receive hail damage.
     /// </summary>
+    [DocumentAsJson("Optional", "false")]
     protected virtual bool ReceiveHailDamage { get; set; } = false;
 
     /// <summary>
     /// Health regeneration speed will be slowed down when saturation is below this fraction of total saturation.
     /// </summary>
+    [DocumentAsJson("Optional", "0.75")]
     protected virtual float AutoRegenSaturationThreshold { get; set; } = 0.75f;
 
     /// <summary>
     /// How many saturation points will be consumed per health point restored.
     /// </summary>
+    [DocumentAsJson("Optional", "150")]
     protected virtual float SaturationPerHealthPoint { get; set; } = 150f;
 
     /// <summary>
     /// This animation will be played if entity received more than 1hp damage. If set to 'null', animation wont be played.
     /// </summary>
+    [DocumentAsJson("Optional", "hurt")]
     protected string? HurtAnimationCode = "hurt";
 
     /// <summary>
@@ -169,6 +202,11 @@ public class EntityBehaviorHealth : EntityBehavior
     protected string SmallHurtEntitySoundCode = "hurt";
 
     protected float timeSinceLastDoTTickSec = 0;
+
+    /// <summary>
+    /// The amount of time between each damage-over-time tick. 
+    /// </summary>
+    [DocumentAsJson("Optional","0.5")]
     protected float timeBetweenDoTTicksSec = 0.5f;
 
 

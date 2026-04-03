@@ -1,4 +1,5 @@
 using System;
+using Vintagestory.API;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -9,16 +10,58 @@ using Vintagestory.API.MathTools;
 
 namespace Vintagestory.GameContent
 {
+    /// <summary>
+    /// Controls how a gait should be used. Also uses properties from <see cref="AnimationMetaData"/>
+    /// </summary>
+    [DocumentAsJson]
     public class GaitMeta : AnimationMetaData
     {
+        /// <summary>
+        /// Determines how fast entity can turn left or right during the gait
+        /// </summary>
+        [DocumentAsJson("Optional", "1")]
         public float YawMultiplier = 1f;
-        public float MoveSpeed = 0f;
+
+        /// <summary>
+        /// The speed of entity that is multiplied by <see cref="ControlMeta.MoveSpeedMultiplier"/> during the gait
+        /// </summary>
+        [DocumentAsJson("Optional", "0")]
+        public float MoveSpeed = 0f;    
+
+        /// <summary>
+        /// Used to move backwards from <see cref="EntityBehaviorRideable"/>
+        /// </summary>
+        [DocumentAsJson("Optional", "False")]
         public bool Backwards = false;
-        // <summary> If true, the animal may use this gait of its own volition </summary>
+
+        /// <summary> 
+        /// If true, the animal may use this gait of its own volition </summary>
+        /// </summary>
+        [DocumentAsJson("Optional", "True")]
         public bool Natural = true;
+
+        /// <summary>
+        /// Currently unused
+        /// </summary>
+        [DocumentAsJson("Unused")]
         public float StaminaCost = 0f;
-        public string? FallbackGaitCode; // Gait to slow down to such as when fatiguing
+
+        /// <summary>
+        /// Currently unused. Used as a fallback when the current gait is no longer valid, i.e. when fatigued
+        /// </summary>
+        [DocumentAsJson("Unused", "None")]
+        public string? FallbackGaitCode;
+
+        /// <summary>
+        /// Sound used during the gait
+        /// </summary>
+        [DocumentAsJson("Optional", "None")]
         public AssetLocation? Sound;
+
+        /// <summary>
+        /// The environment that this gait should be played in
+        /// </summary>
+        [DocumentAsJson("Optional", "Land")]
         public EnumHabitat Environment = EnumHabitat.Land;
 
         public int Direction => MoveSpeed == 0f ? 0 : Backwards ? -1 : 1;
@@ -27,6 +70,84 @@ namespace Vintagestory.GameContent
         public bool HasBackwardMotion => MoveSpeed > 0f && Backwards;
     }
 
+    /// <summary>
+    /// Allows to define gaits of an entity.
+    /// <br/>Uses the "gait" code
+    /// </summary>
+    /// <example><code lang="json">
+    /// "behaviors": [
+    ///   {
+    ///     "code": "gait",
+    ///     "idleGait": "idle",
+    ///     "gaits": [
+    ///       {
+    ///           "code": "walkback",
+    ///           "movespeed": 0.011,
+    ///           "backwards": true,
+    ///           "yawMultiplier": 1,
+    ///           "sound": "game:creature/hooved/trot"
+    ///       },
+    ///       {
+    ///           "code": "idle",
+    ///           "yawMultiplier": 1
+    ///       },
+    ///       {
+    ///           "code": "walk",
+    ///           "movespeed": 0.019,
+    ///           "yawMultiplier": 1,
+    ///           "sound": "game:creature/hooved/trot"
+    ///       },
+    ///       {
+    ///           "code": "trot",
+    ///           "movespeed": 0.036,
+    ///           "yawMultiplier": 0.85,
+    ///           "fallbackGaitCode": "walk",
+    ///           "sound": "game:creature/hooved/trot"
+    ///       },
+    ///       {
+    ///           "code": "canter",
+    ///           "movespeed": 0.075,
+    ///           "yawMultiplier": 0.75,
+    ///           "fallbackGaitCode": "trot",
+    ///           "sound": "game:creature/hooved/trot"
+    ///       },
+    ///       {
+    ///           "code": "sprint",
+    ///           "movespeed": 0.1067,
+    ///           "yawMultiplier": 1,
+    ///           "isSprint": true,
+    ///           "fallbackGaitCode": "walk",
+    ///           "sound": "game:creature/hooved/gallop"
+    ///       },
+    ///       {
+    ///           "code": "swim",
+    ///           "movespeed": 0.02,
+    ///           "yawMultiplier": 1,
+    ///           "fallbackGaitCode": "idle",
+    ///           "sound": "game:creature/hooved/gallop"
+    ///       },
+    ///       {
+    ///           "code": "swimback",
+    ///           "movespeed": 0.02,
+    ///           "backwards": true,
+    ///           "yawMultiplier": 1,
+    ///           "fallbackGaitCode": "idle",
+    ///           "sound": "game:creature/hooved/gallop"
+    ///       },
+    ///       {
+    ///           "code": "jump",
+    ///           "movespeed": 0.1067,
+    ///           "yawMultiplier": 1,
+    ///           "fallbackGaitCode": "walk",
+    ///           "sound": "game:creature/hooved/gallop"
+    ///       }
+    ///     ]
+    ///   }
+    /// ]
+    /// </code></example>
+    [DocumentAsJson]
+    [AddDocumentationProperty("gaits", "List of gaits in order of increasing speed for the rideable entity", "Vintagestory.GameContent.GaitMeta[]", "Required", "", false)]
+    [AddDocumentationProperty("idleGait", "The code of idle gait used when no other gait is triggered", "System.String", "Required", "idle", false)]
     public class EntityBehaviorGait : EntityBehavior
     {
         public override string PropertyName()

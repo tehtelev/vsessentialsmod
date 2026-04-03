@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using Vintagestory.API;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
@@ -9,6 +9,11 @@ using Vintagestory.API.MathTools;
 
 namespace Vintagestory.GameContent
 {
+    /// <summary>
+    /// Affects accuracy of ranged weapon that entity is currently using. This class has no further properties.
+    /// <br/>Uses the "aimingaccuracy" code
+    /// </summary>
+    [DocumentAsJson]
     public class EntityBehaviorAimingAccuracy : EntityBehavior
     {
         public Random Rand;

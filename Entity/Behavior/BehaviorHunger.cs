@@ -1,4 +1,5 @@
 using System;
+using Vintagestory.API;
 using System.Xml.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -12,6 +13,20 @@ using Vintagestory.API.Util;
 
 namespace Vintagestory.GameContent
 {
+    /// <summary>
+    /// Adds hunger to entity. Allows it to eat and die from starvation.
+    /// <br/>Uses the "hunger" code
+    /// </summary>
+    /// <example><code lang="json">
+    ///"behaviors": [
+    /// {
+    ///     "code": "hunger",
+    ///     "currentsaturation": 1500.0,
+    ///     "maxsaturation": 1500.0
+    /// },
+    ///],
+    /// </code></example>
+    [DocumentAsJson]
     public class EntityBehaviorHunger : EntityBehavior
     {
         ITreeAttribute hungerTree;
@@ -53,12 +68,21 @@ namespace Vintagestory.GameContent
             set { hungerTree.SetFloat("saturationlossdelaydairy", value); entity.WatchedAttributes.MarkPathDirty("hunger"); }
         }
 
+        /// <summary>
+        /// <!--<jsonalias>CurrentSaturation</jsonalias>-->
+        /// The entity will have this much saturation upon spawn if this is set in JSON. Otherwise, this is the current saturation of the entity
+        /// </summary>
+        [DocumentAsJson("Optional", "1500")]
         public float Saturation
         {
             get { return hungerTree.GetFloat("currentsaturation"); }
             set { hungerTree.SetFloat("currentsaturation", value); entity.WatchedAttributes.MarkPathDirty("hunger"); }
         }
 
+        /// <summary>
+        /// Max possible saturation the entity can have in general
+        /// </summary>
+        [DocumentAsJson("Optional", "1500")]
         public float MaxSaturation
         {
             get { return hungerTree.GetFloat("maxsaturation"); }

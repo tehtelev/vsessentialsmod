@@ -1,4 +1,5 @@
-﻿using System.Text;
+using System.Text;
+using Vintagestory.API;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
@@ -8,11 +9,43 @@ using Vintagestory.API.Datastructures;
 
 namespace Vintagestory.GameContent
 {
+    /// <summary>
+    /// Despawns entity on certain conditions
+    /// <br/>Uses the "despawn" code.
+    /// </summary>
+    /// <example><code lang="json">
+    ///"behaviors": [
+    /// {
+    ///     "code": "despawn",
+    ///     "minPlayerDistance": 16,
+    ///     "belowLightLevel": 8,
+    ///     "minSeconds": 300,
+    ///     "afterDays": 14
+    /// }
+    ///],
+    /// </code></example>
+    [DocumentAsJson]
+    [AddDocumentationProperty("afterDays", "How many in-game days should pass before the entity can despawn", "System.Single", "Optional", "14", false)]
     public class EntityBehaviorDespawn : EntityBehavior, ITimedDespawn
     {
+        /// <summary>
+        /// Determines the minimal distance the entity should be from nearest player before it can despawn. Ignored when set to -1
+        /// </summary>
+        [DocumentAsJson("Optional", "-1")]
         float minPlayerDistance = -1f;
+
+        /// <summary>
+        /// Despawns the entity only below specified light level. Ignored when set to -1
+        /// </summary>
+        [DocumentAsJson("Optional", "-1")]
         float belowLightLevel = -1f;
+
+        /// <summary>
+        /// How many real time seconds should pass before the entity can despawn
+        /// </summary>
+        [DocumentAsJson("Optional", "30")]
         float minSeconds = 30;
+
         float accumSeconds;
         float accumOffset = 2.5f;
 

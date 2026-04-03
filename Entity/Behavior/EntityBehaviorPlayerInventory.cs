@@ -1,5 +1,6 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
+using Vintagestory.API;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
@@ -9,6 +10,22 @@ using Vintagestory.API.Datastructures;
 
 namespace Vintagestory.GameContent
 {
+    /// <summary>
+    /// Implements the inventory of player and rendering of the clothing and armor the player is currently wearing.
+    /// <br/>Also handles dropping items/armor on death.
+    /// <br/>Uses the "playerinventory" code
+    /// </summary>
+    /// <example><code lang="json">
+    /// "behaviors": [
+    ///  {
+    ///     "code": "playerinventory"
+    ///  }
+    /// ]
+    /// </code></example>
+    [DocumentAsJson]
+    [AddDocumentationProperty("eyeprotective", "Use this on a collectible type. If true and the player is wearing this item, they won't cover their eyes with the right hand", "System.Boolean", "Optional", "false", true)]
+    [AddDocumentationProperty("keepContents", "If true, the player won't drop their inventory on death", "System.Boolean", "Optional", "false", true)]
+    [AddDocumentationProperty("dropArmorOnDeath", "If true, the player will drop the armor they are currently wearing on death. Only collectible types that have the 'protectionModifiers' attribute are affected", "System.Boolean", "Optional", "false", true)]
     public class EntityBehaviorPlayerInventory : EntityBehaviorTexturedClothing
     {
         IPlayer Player => (entity as EntityPlayer).Player;

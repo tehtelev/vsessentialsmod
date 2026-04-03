@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using Vintagestory.API;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
@@ -10,12 +11,37 @@ using Vintagestory.API.Util;
 
 namespace Vintagestory.GameContent
 {
+    /// <summary>
+    /// Makes entity float way up to the surface if it is stuck in blocks. Requires shape element named "Center" to work correctly.
+    /// <br/>Uses the "floatupwhenstuck" code
+    /// </summary>
+    /// <example><code lang="json">
+    ///"behaviors": [
+    /// {
+    ///     "code": "floatupwhenstuck",
+    ///     "onlyWhenDead": true,
+    ///     "pushVelocityMul": 0.5
+    /// },
+    ///],
+    /// </code></example>
+    [DocumentAsJson]
     public class EntityBehaviorFloatUpWhenStuck : EntityBehavior
     {
+        /// <summary>
+        /// Whether entity is required to be dead to make it float up
+        /// </summary>
+        [DocumentAsJson("Optional", "false")]
         bool onlyWhenDead;
+
         int counter = 0;
         bool stuckInBlock;
+
+        /// <summary>
+        /// A multiplier for how fast an entity should be pushed out of a block
+        /// </summary>
+        [DocumentAsJson("Optional", "1")]
         float pushVelocityMul = 1f;
+
         Vec3d tmpPos = new Vec3d();
 
         public EntityBehaviorFloatUpWhenStuck(Entity entity) : base(entity)

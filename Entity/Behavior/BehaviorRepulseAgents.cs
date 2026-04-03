@@ -1,4 +1,5 @@
 using System;
+using Vintagestory.API;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -14,9 +15,32 @@ namespace Vintagestory.GameContent
         bool Repulse(Entity entity, Vec3d pushVector);
     }
 
+    /// <summary>
+    /// Allows the entity to be pushed by or push other entities using an ellipsoidal repulsion area.
+    /// <br/>Uses the "ellipsoidalrepulseagents" code
+    /// </summary>
+    /// <example><code lang="json">
+    /// "behaviors": [
+    ///  {
+    ///     "code": "ellipsoidalrepulseagents"
+    ///     "offset": { "x": 0.1, "z": 1.5 },
+    ///     "radius": { "x": 1.9, "y": 1.5, "z": 4.6 }
+    ///  }
+    /// ]
+    /// </code></example>
+    [DocumentAsJson]
     public class EntityBehaviorEllipsoidalRepulseAgents : EntityBehaviorRepulseAgents, ICustomRepulseBehavior
     {
+        /// <summary>
+        /// Local position offset of the ellipsoid
+        /// </summary>
+        [DocumentAsJson("Required")]
         protected Vec3d offset;
+
+        /// <summary>
+        /// Dimensions of the ellipsoid
+        /// </summary>
+        [DocumentAsJson("Required")]
         protected Vec3d radius;
 
         public EntityBehaviorEllipsoidalRepulseAgents(Entity entity) : base(entity)
@@ -109,11 +133,30 @@ namespace Vintagestory.GameContent
         }
     }
 
+    /// <summary>
+    /// Allows the entity to be pushed by or push other entities using a spherical/cylindrical repulsion area.
+    /// <br/>Uses the "repulseagents" code
+    /// </summary>
+    /// <example><code lang="json">
+    /// "behaviors": [
+    ///  {
+    ///     "code": "repulseagents",
+    ///     "movable": false
+    ///  }
+    /// ]
+    /// </code></example>
+    [DocumentAsJson]
     public class EntityBehaviorRepulseAgents : EntityBehavior
     {
         protected Vec3d pushVector = new Vec3d();
         protected EntityPartitioning partitionUtil;
+
+        /// <summary>
+        /// If true, this entity can be pushed by other entities. If false, it can't
+        /// </summary>
+        [DocumentAsJson("Optional", "true")]
         protected bool movable = true;
+
         protected bool ignorePlayers = false;
 
         protected double touchdist;

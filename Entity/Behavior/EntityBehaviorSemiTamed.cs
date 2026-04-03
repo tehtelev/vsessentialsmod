@@ -1,10 +1,15 @@
-﻿using Vintagestory.API.Common;
+using Vintagestory.API;
+using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 
 #nullable disable
 
 namespace Vintagestory.GameContent
 {
+    /// <summary>
+    /// Causes an entity to not flee by default when near a player.
+    /// </summary>
+    [DocumentAsJson]
     public class EntityBehaviorSemiTamed : EntityBehavior
     {
         public EntityBehaviorSemiTamed(Entity entity) : base(entity)

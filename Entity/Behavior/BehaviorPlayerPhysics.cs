@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Vintagestory.API;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -11,7 +12,18 @@ using Vintagestory.API.Server;
 #nullable disable
 namespace Vintagestory.GameContent;
 
-// Client-side player physics.
+/// <summary>
+/// Client-side player physics. This class has no further properties.
+/// <br/>Uses the "playerphysics" code
+/// </summary>
+/// <example><code lang="json">
+/// "behaviors": [
+///  {
+///     "code": "playerphysics"
+///  }
+/// ]
+/// </code></example>
+[DocumentAsJson]
 public class EntityBehaviorPlayerPhysics : EntityBehaviorControlledPhysics, IRenderer, IRemotePhysics
 {
     private IPlayer player;

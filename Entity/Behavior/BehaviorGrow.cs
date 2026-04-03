@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using Vintagestory.API;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
@@ -8,16 +9,54 @@ using Vintagestory.API.MathTools;
 
 namespace Vintagestory.GameContent
 {
-
+    /// <summary>
+    /// Makes entity grow to the adult version.
+    /// <br/>Uses the "grow" code
+    /// </summary>
+    /// <example><code lang="json">
+    ///"behaviors": [
+    /// {
+    ///     "code": "grow",
+    ///     "enabledByType": { "*poult": true, "*": false },
+    ///     "hoursToGrowByType": {
+    ///         "*-henpoult": 72,
+    ///         "*-roosterpoult": 80
+    ///     },
+    ///     "adultEntityCodesByType": {
+    ///         "*-henpoult": ["chicken-hen"],
+    ///         "*-roosterpoult": ["chicken-rooster"]
+    ///     }
+    /// },
+    ///],
+    /// </code></example>
+    [DocumentAsJson]
     public class EntityBehaviorGrow : EntityBehavior
     {
         ITreeAttribute growTree;
         long callbackId = 0;
 
+        /// <summary>
+        /// How many in-game hours it takes for the creature to grow into an adult, unless <see cref="OrPortionsEatenForGrowing"/> has been satisfied.
+        /// </summary>
+        [DocumentAsJson("Optional", "96")]
         public float HoursToGrow { get; set; }
+
+        /// <summary>
+        /// The total amount of food portions the creature should eat to grow into an adult, unless <see cref="HoursToGrow"/> has been satisfied.
+        /// </summary>
+        [DocumentAsJson("Optional", "12")]
         public float OrPortionsEatenForGrowing { get; set; }
 
+        /// <summary>
+        /// The entity codes of the adult versions this creature can grow into
+        /// </summary>
+        [DocumentAsJson("Required")]
         public AssetLocation[] AdultEntityCodes;
+
+        /// <summary>
+        /// The entity codes of the adult versions this creature can grow into if it ate the least amount of food portions specified in OrPortionsEatenForGrowing
+        /// </summary>
+        [DocumentAsJson("Optional", "None")]
         public AssetLocation[] FedAdultEntityCodes;
 
         protected double SpawnedTotalHours

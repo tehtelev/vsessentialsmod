@@ -1,4 +1,5 @@
-﻿using Vintagestory.API.Common;
+using Vintagestory.API;
+using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
@@ -8,6 +9,11 @@ using Vintagestory.API.Server;
 
 namespace Vintagestory.GameContent
 {
+    /// <summary>
+    /// Allows entity to pick dropped items up. This class has no further properties.
+    /// <br/>Uses the "collectitems" code
+    /// </summary>
+    [DocumentAsJson]
     public class EntityBehaviorCollectEntities : EntityBehavior
     {
         int waitTicks = 0;

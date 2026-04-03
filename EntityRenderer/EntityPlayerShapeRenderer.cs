@@ -95,7 +95,8 @@ namespace Vintagestory.GameContent
             TesselateShape((meshData) => {
                 disposeMeshes();
 
-                if (capi.IsShuttingDown)
+                IAnimator animator = entity.AnimManager?.Animator;
+                if (capi.IsShuttingDown || animator == null)
                 {
                     return;
                 }
@@ -110,14 +111,14 @@ namespace Vintagestory.GameContent
                     if (renderMode == RenderMode.ImmersiveFirstPerson)
                     {
                         HashSet<int> skipJointIds = new HashSet<int>();
-                        loadJointIdsRecursive(entity.AnimManager.Animator.GetPosebyName("Neck"), skipJointIds);
+                        loadJointIdsRecursive(animator.GetPosebyName("Neck"), skipJointIds);
                         firstPersonMesh.AddMeshData(meshData, (i) => !skipJointIds.Contains(meshData.CustomInts.Values[i * 4]));
                     }
                     else
                     {
                         HashSet<int> includeJointIds = new HashSet<int>();
-                        loadJointIdsRecursive(entity.AnimManager.Animator.GetPosebyName(entity.GetBoneName("upperArmRBoneName", "UpperArmR")), includeJointIds);
-                        loadJointIdsRecursive(entity.AnimManager.Animator.GetPosebyName(entity.GetBoneName("upperArmLBoneName", "UpperArmL")), includeJointIds);
+                        loadJointIdsRecursive(animator.GetPosebyName(entity.GetBoneName("upperArmRBoneName", "UpperArmR")), includeJointIds);
+                        loadJointIdsRecursive(animator.GetPosebyName(entity.GetBoneName("upperArmLBoneName", "UpperArmL")), includeJointIds);
 
                         firstPersonMesh.AddMeshData(meshData, (i) => includeJointIds.Contains(meshData.CustomInts.Values[i * 4]));
                     }
@@ -188,6 +189,7 @@ namespace Vintagestory.GameContent
 
         public override void RenderToGui(float dt, double posX, double posY, double posZ, float yawDelta, float size)
         {
+            if (entityPlayer.TpAnimManager?.Animator == null || entity.AnimManager?.Animator == null) return;
             var prog = capi.Render.CurrentActiveShader;
 
             if (capi.IsGamePaused)
@@ -357,7 +359,14 @@ namespace Vintagestory.GameContent
             var ishandrender = renderMode == RenderMode.FirstPerson;
             if ((ishandrender && /*!isShadowPass &&*/ !capi.Settings.Bool["hideFpHands"]) || !ishandrender)
             {
-                base.RenderHeldItem(dt, isShadowPass, right);
+                try
+                {
+                    base.RenderHeldItem(dt, isShadowPass, right);
+                } catch (ArgumentException)
+                {
+                    capi.Logger.Error("Exception thrown trying to render player held item {0} on {1}", right ? eagent.RightHandItemSlot?.Itemstack : eagent.LeftHandItemSlot?.Itemstack, eagent.GetName());
+                    throw;
+                }
             }
         }
 

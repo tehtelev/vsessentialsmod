@@ -2,6 +2,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Vintagestory.API;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -13,8 +14,17 @@ using Vintagestory.API.Util;
 
 namespace Vintagestory.GameContent
 {
+    /// <summary>
+    /// Specifies a parent shape element to attach model to.
+    /// <br/>Optionally, you can also define a custom transform that is applied relative to the parent element
+    /// </summary>
+    [DocumentAsJson]
     public class StepParentElementTo : ModelTransform
     {
+        /// <summary>
+        /// The name of the parent shape element to attach model to.
+        /// </summary>
+        [DocumentAsJson("Required")]
         [JsonProperty]
         public string ElementName;
     }
@@ -78,20 +88,56 @@ namespace Vintagestory.GameContent
     }
 #nullable disable
 
+    /// <summary>
+    /// A set of properties that make a collectible attachable to an entity
+    /// </summary>
+    [DocumentAsJson]
     public class AttributeAttachableToEntity : IAttachableToEntity
     {
+        /// <summary>
+        /// Allows this collectible to be attached to slot with specified category code
+        /// </summary>
+        [DocumentAsJson("Required")]
         public string CategoryCode { get; set; }
+
+        /// <summary>
+        /// The shape used when this collectible is attached. If not set, the shape of the collectible is used
+        /// </summary>
+        [DocumentAsJson("Recommended", "None")]
         public CompositeShape AttachedShape { get; set; }
+
+        /// <summary>
+        /// The shape elements that should not be rendered
+        /// </summary>
+        [DocumentAsJson("Optional", "None")]
         public string[] DisableElements { get; set; }
+
+        /// <summary>
+        /// The shape elements that should still be rendered even if they are covered by <see cref="DisableElements"/>
+        /// </summary>
+        [DocumentAsJson("Optional", "None")]
         public string[] KeepElements { get; set; }
+
+        /// <summary>
+        /// Unique key for this attachable to make sure it is rendered correctly
+        /// </summary>
+        [DocumentAsJson("Recommended", "None")]
         public string TexturePrefixCode { get; set; }
+
         public string GetTexturePrefixCode(ItemStack stack) => TexturePrefixCode;
+
+        /// <summary>
+        /// The shape used when this collectible is attached to specific slot
+        /// </summary>
+        [DocumentAsJson("Recommended", "None")]
         public API.Datastructures.OrderedDictionary<string, CompositeShape> AttachedShapeBySlotCode { get; set; }
+
         public void CollectTextures(ItemStack stack, Shape gearShape, string texturePrefixCode, Dictionary<string, CompositeTexture> intoDict) => IAttachableToEntity.CollectTexturesFromCollectible(stack, texturePrefixCode, gearShape, intoDict);
 
         /// <summary>
         /// Occupy additional space behind this slot
         /// </summary>
+        [DocumentAsJson("Optional", "0")]
         public int RequiresBehindSlots { get; set; }
 
 
@@ -122,6 +168,11 @@ namespace Vintagestory.GameContent
         public bool IsAttachable(Entity toEntity, ItemStack itemStack) => true;
     }
 
+    /// <summary>
+    /// A type of entity behavior that can be used to hold an inventory.
+    /// This is not a usable entity behavior, but other entity behaviors may used this.
+    /// </summary>
+    [DocumentAsJson]
     public abstract class EntityBehaviorContainer : EntityBehavior
     {
         protected ICoreAPI Api;
@@ -131,6 +182,11 @@ namespace Vintagestory.GameContent
         InWorldContainer container;
         public bool hideClothing;
         bool eventRegistered;
+
+        /// <summary>
+        /// Should the contents of this container be dropped on death?
+        /// </summary>
+        [DocumentAsJson("Optional", "False")]
         bool dropContentsOnDeath;
 
         protected EntityBehaviorContainer(Entity entity) : base(entity)

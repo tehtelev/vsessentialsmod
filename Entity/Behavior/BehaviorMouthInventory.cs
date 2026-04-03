@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
+using Vintagestory.API;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
@@ -9,6 +10,27 @@ using Vintagestory.API.Util;
 
 namespace Vintagestory.GameContent
 {
+    /// <summary>
+    /// Adds one-slot inventory and displays the stored item on the entity.
+    /// <br/>Uses the "mouthinventory" code
+    /// </summary>
+    /// <example><code lang="json">
+    ///"behaviors": [
+    /// {
+    ///     "code": "mouthinventory",
+    ///     "acceptStacks": [
+    ///         { "type": "item", "code": "honeycomb" },
+    ///         { "type": "item", "code": "fruit-blueberry" },
+    ///         { "type": "item", "code": "fruit-cranberry" },
+    ///         { "type": "item", "code": "fruit-redcurrant" },
+    ///         { "type": "item", "code": "fruit-whitecurrant" },
+    ///         { "type": "item", "code": "fruit-blackcurrant" }
+    ///     ]
+    /// },
+    ///],
+    /// </code></example>
+    [DocumentAsJson]
+    [AddDocumentationProperty("acceptStacks", "The items the inventory can hold", "Vintagestory.API.Common.JsonItemStack[]", "Required", "", false)]
     public class EntityBehaviorMouthInventory : EntityBehavior
     {
         EntityAgent entityAgent;

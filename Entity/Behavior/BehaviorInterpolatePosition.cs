@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Vintagestory.API;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -40,6 +41,11 @@ public struct PositionSnapshot
     }
 }
 
+/// <summary>
+/// Updates entity position on client based on server updates.
+/// <br/>Uses the "interpolateposition" code
+/// </summary>
+[DocumentAsJson]
 public class EntityBehaviorInterpolatePosition : EntityBehavior, IRenderer
 {
     public ICoreClientAPI capi;

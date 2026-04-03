@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Vintagestory.API;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
@@ -7,7 +8,9 @@ namespace Vintagestory.GameContent;
 
 /// <summary>
 /// Updates dynamically assigned entity tags that have 'state-' prefix.
+/// <br/>Uses the "entitystatetags" code
 /// </summary>
+[DocumentAsJson]
 public class EntityBehaviorEntityStateTags : EntityBehavior
 {
     public EntityBehaviorEntityStateTags(Entity entity) : base(entity)
@@ -97,6 +100,11 @@ public class EntityBehaviorEntityStateTags : EntityBehavior
     protected static TagSet CollectibleTagHasOpenFire = TagSet.Empty;
 
     protected float TimeSinceUpdateSec = 0;
+
+    /// <summary>
+    /// How often to update the tags, in seconds
+    /// </summary>
+    [DocumentAsJson("Optional", "1")]
     protected float UpdatePeriodSec = 1;
 
 

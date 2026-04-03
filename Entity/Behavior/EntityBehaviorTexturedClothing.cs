@@ -1,4 +1,5 @@
 using System;
+using Vintagestory.API;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -10,6 +11,12 @@ using Vintagestory.API.MathTools;
 
 namespace Vintagestory.GameContent
 {
+    /// <summary>
+    /// This allows an entity to have a clothing inventory that renders on top of the entity.
+    /// </summary>
+    [DocumentAsJson]
+    [AddDocumentationProperty("skinBaseTextureKey", "If specified in the entity attributes, this is a texture in the entity that will be used for the clothing.", "System.String", "Optional", "None", true)]
+    [AddDocumentationProperty("renderOntoSkin", "If true in an item's attributes, the item will render as part of the skin on the entity.", "System.Boolean", "Optional", "False", true)]
     public abstract class EntityBehaviorTexturedClothing : EntityBehaviorContainer
     {
         public event Action<LoadedTexture, TextureAtlasPosition, int> OnReloadSkin;

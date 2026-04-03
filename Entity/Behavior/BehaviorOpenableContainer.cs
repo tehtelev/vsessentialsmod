@@ -1,4 +1,5 @@
-﻿using System.Text;
+using System.Text;
+using Vintagestory.API;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -11,6 +12,20 @@ using Vintagestory.API.Util;
 
 namespace Vintagestory.GameContent
 {
+    /// <summary>
+    /// Adds inventory to entity that is opened upon interacting with it.
+    /// <br/>Uses the "openablecontainer" code
+    /// </summary>
+    /// <example><code lang="json">
+    ///"behaviors": [
+    /// {
+    ///     "code": "openablecontainer",
+    ///     "quantitySlots": 8
+    /// },
+    ///],
+    /// </code></example>
+    [DocumentAsJson]
+    [AddDocumentationProperty("quantitySlots", "The amount of slots the inventory should have", "System.Int32", "Optional", "8", false)]
     public class EntityBehaviorOpenableContainer : EntityBehavior
     {
         protected InventoryGeneric inv;

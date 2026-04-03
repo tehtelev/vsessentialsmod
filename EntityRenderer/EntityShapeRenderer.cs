@@ -619,7 +619,7 @@ namespace Vintagestory.GameContent
 
         public override void DoRender3DOpaqueBatched(float dt, bool isShadowPass)
         {
-            if (isSpectator || meshRefOpaque == null) return;
+            if (isSpectator || meshRefOpaque == null || entity.AnimManager?.Animator == null) return;
 
             var prog = capi.Render.CurrentActiveShader;
 

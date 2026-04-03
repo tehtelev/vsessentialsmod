@@ -366,6 +366,11 @@ public class AiTaskSeekFoodAndEatR : AiTaskBaseR
             entity.AnimManager.StopAnimation(Config.EatAnimationMeta.Code);
         }
 
+        if (Config.EatAnimationMetaLooseItems != null)
+        {
+            entity.AnimManager.StopAnimation(Config.EatAnimationMetaLooseItems.Code);
+        }
+
         if (cancelled)
         {
             cooldownUntilTotalHours = 0;

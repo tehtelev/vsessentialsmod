@@ -1,4 +1,5 @@
 using System;
+using Vintagestory.API;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -10,6 +11,21 @@ using Vintagestory.API.MathTools;
 
 namespace Vintagestory.GameContent
 {
+    /// <summary>
+    /// Displays name above entity.
+    /// <br/>Uses the "nametag" code
+    /// </summary>
+    /// <example><code lang="json">
+    ///"behaviors": [
+    /// {
+    ///     "code": "nametag",
+    ///     "showtagonlywhentargeted": true,
+    ///     "selectFromRandomName": ["Yern", "Gild", "Hans", "Hector", "McCrae", "Yoskolo", "Grit", "Bounder"]
+    /// },
+    ///],
+    /// </code></example>
+    [DocumentAsJson]
+    [AddDocumentationProperty("selectFromRandomName", "Randomly choose and set the entity's display name to one of the specified names", "System.Single[]", "Recommended", "", false)]
     public class EntityBehaviorNameTag : EntityBehavior, IRenderer
     {
         protected LoadedTexture nameTagTexture = null;
@@ -19,9 +35,6 @@ namespace Vintagestory.GameContent
         protected int renderRange = 999;
         IPlayer player;
 
-        /// <summary>
-        /// The display name for the entity.
-        /// </summary>
         public string DisplayName
         {
             get {
@@ -30,17 +43,27 @@ namespace Vintagestory.GameContent
             }
         }
 
+        /// <summary>
+        /// The name that is shown when the real name is not yet revealed. Only used if <see cref="TriggeredNameReveal"/> is true.
+        /// </summary>
+        [DocumentAsJson("Optional", "nametag-default-unrevealedname")]
         public string UnrevealedDisplayName { get; set; }
 
         /// <summary>
+        /// <!--<jsonalias>ShowTagOnlyWhenTargeted</jsonalias>-->
         /// Whether or not to show the nametag constantly or only when being looked at.
         /// </summary>
+        [DocumentAsJson("Optional", "false")]
         public bool ShowOnlyWhenTargeted
         {
             get { return entity.WatchedAttributes.GetTreeAttribute("nametag")?.GetBool("showtagonlywhentargeted") == true; }
             set { entity.WatchedAttributes.GetTreeAttribute("nametag")?.SetBool("showtagonlywhentargeted", value); }
         }
 
+        /// <summary>
+        /// Whether the real name on entity is only revealed after certain conditions are met
+        /// </summary>
+        [DocumentAsJson("Optional", "false")]
         public bool TriggeredNameReveal { get; set; }
 
         public bool IsNameRevealedFor(string playeruid)
@@ -57,7 +80,10 @@ namespace Vintagestory.GameContent
             OnNameChanged();
         }
 
-
+        /// <summary>
+        /// The maximum range the nametag is visible from
+        /// </summary>
+        [DocumentAsJson("Optional", "999")]
         public int RenderRange
         {
             get { return entity.WatchedAttributes.GetTreeAttribute("nametag").GetInt("renderRange"); }
@@ -89,7 +115,7 @@ namespace Vintagestory.GameContent
 
                 SetName(randomName[entity.World.Rand.Next(randomName.Length)]);
             }
-
+                
             TriggeredNameReveal = attributes["triggeredNameReveal"].AsBool(false);
             RenderRange = attributes["renderRange"].AsInt(999);
             ShowOnlyWhenTargeted = attributes["showtagonlywhentargeted"].AsBool(false);

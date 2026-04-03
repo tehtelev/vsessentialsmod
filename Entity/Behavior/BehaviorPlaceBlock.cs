@@ -1,4 +1,5 @@
-﻿using Vintagestory.API.Common;
+using Vintagestory.API;
+using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
@@ -7,6 +8,13 @@ using Vintagestory.API.MathTools;
 
 namespace Vintagestory.GameContent
 {
+    /// <summary>
+    /// Allows an entity to randomly place blocks nearby over time.
+    /// <br/>Uses the "placeblock" code
+    /// <br/>Currently not used.
+    /// </summary>
+    [DocumentAsJson]
+    [AddDocumentationProperty("blockCodes", "A list of blocks that can be randomly placed by this entity", "System.String[]", "Optional", "None", false)]
     public class EntityBehaviorPlaceBlock : EntityBehavior
     {
         public override string PropertyName()
@@ -18,11 +26,19 @@ namespace Vintagestory.GameContent
         JsonObject attributes;
         long callbackId = 0;
 
+        /// <summary>
+        /// Minimum in-game hours between block placements
+        /// </summary>
+        [DocumentAsJson("Optional", "192")]
         internal float MinHourDelay
         {
             get { return attributes["minHourDelay"].AsFloat(8 * 24); }
         }
 
+        /// <summary>
+        /// Maximum in-game hours between block placements
+        /// </summary>
+        [DocumentAsJson("Optional", "360")]
         internal float MaxHourDelay
         {
             get { return attributes["maxHourDelay"].AsFloat(15 * 24); }
