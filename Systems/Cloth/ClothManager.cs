@@ -147,7 +147,25 @@ namespace Vintagestory.GameContent
             return null;
         }
 
-        
+        /// <summary>
+        /// Only checks the first and last attachment point
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <returns></returns>
+        public ClothSystem GetClothSystemAttachedToEntity(long entityid)
+        {
+            foreach (var sys in clothSystems.Values)
+            {
+                if (sys.FirstPoint.pinnedToEntityId == entityid || sys.LastPoint.pinnedToEntityId == entityid)
+                {
+                    return sys;
+                }
+            }
+
+            return null;
+        }
+
+
 
         public void OnRenderFrame(float dt, EnumRenderStage stage)
         {
@@ -188,7 +206,7 @@ namespace Vintagestory.GameContent
                             maxext = (float)cs.MaxExtension;
                             maxcs = cs;
                             stretchWarn = cs.StretchWarn;
-                        }  
+                        }
                     }
 
                     if (maxext > stretchWarn && maxcs.secondsOverStretched > 0.2)
@@ -285,8 +303,7 @@ namespace Vintagestory.GameContent
                             {
                                 Vec3d soundPos = cs.CenterPosition;
 
-                                if (cs.FirstPoint.PinnedToEntity != null) 
-                                    soundPos = cs.FirstPoint.PinnedToEntity.Pos.XYZ;
+                                if (cs.FirstPoint.PinnedToEntity != null) soundPos = cs.FirstPoint.PinnedToEntity.Pos.XYZ;
                                 sapi.World.PlaySoundAt(new AssetLocation("sounds/effect/roperip"), soundPos.X, soundPos.Y, soundPos.Z);
 
                                 var fp = cs.FirstPoint;
@@ -300,6 +317,9 @@ namespace Vintagestory.GameContent
 
                                     sapi.World.SpawnParticles(2, ColorUtil.ColorFromRgba(60, 97, 115, 255), pos, pos, new Vec3f(-4f, -1f, -4f), new Vec3f(4, 2, 4), 2, 1, 0.5f, EnumParticleModel.Cube);
                                 }
+
+                                if (cs.FirstPoint.PinnedToEntity is IRopeRippedListener listenerf) listenerf.OnRopeRipped(cs);
+                                if (cs.LastPoint.PinnedToEntity is IRopeRippedListener listenerl) listenerl.OnRopeRipped(cs);
 
                                 toRemove.Add(val.Key);
                             }
@@ -760,5 +780,10 @@ namespace Vintagestory.GameContent
 
             return TextCommandResult.Success();
         }
+    }
+
+    public interface IRopeRippedListener
+    {
+        void OnRopeRipped(ClothSystem cs);
     }
 }

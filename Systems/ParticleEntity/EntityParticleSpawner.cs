@@ -86,7 +86,7 @@ namespace Vintagestory.GameContent
             string type = (string)args[0];
             if (args.Parsers[1].IsMissing)
             {
-                return TextCommandResult.Success(Lang.Get("{0} are currently {1}", type, disabledInsects.Contains(type) ? Lang.Get("disabled") : Lang.Get("enabled")));
+                return TextCommandResult.Success(Lang.Get("insectconfig-type-and-current-state", type, disabledInsects.Contains(type) ? Lang.Get("disabled") : Lang.Get("enabled")));
             }
 
             bool disabled = !(bool)args[1];
@@ -96,7 +96,7 @@ namespace Vintagestory.GameContent
 
             capi.Settings.Strings["disabledInsects"] = disabledInsects.ToList();
 
-            return TextCommandResult.Success(Lang.Get("{0} are now {1}", type, disabled ? Lang.Get("disabled") : Lang.Get("enabled")));
+            return TextCommandResult.Success(Lang.Get("insectconfig-type-and-changed-to-state", type, disabled ? Lang.Get("disabled") : Lang.Get("enabled")));
         }
 
         private TextCommandResult handleCount(TextCommandCallingArgs args)

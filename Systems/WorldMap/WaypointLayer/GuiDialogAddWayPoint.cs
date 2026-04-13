@@ -203,7 +203,7 @@ namespace Vintagestory.GameContent
 
         protected virtual void OnIconSelected(int index)
         {
-            if (index < colors.Length && index >= 0)
+            if (index < icons.Length && index >= 0)
             {
                 selectedIcon = icons[index];
             }

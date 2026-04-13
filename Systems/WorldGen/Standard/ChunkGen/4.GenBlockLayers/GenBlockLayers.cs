@@ -80,6 +80,7 @@ namespace Vintagestory.ServerMods
         {
             LoadGlobalConfig(api);
 
+            api.ObjectCache.Remove(BlockLayerConfig.cacheKey);
             blockLayerConfig = BlockLayerConfig.GetInstance(api);
 
             rnd = new LCGRandom(api.WorldManager.Seed);
@@ -260,14 +261,12 @@ namespace Vintagestory.ServerMods
         {
             int i = 0;
             int j = 0;
-
             bool underWater = false;
             bool isOcean = false;
             bool underIce = false;
             bool first = true;
             int startPosY = pos.Y;
-
-
+            
             while (pos.Y > 0)
             {
                 int chunkY = pos.Y / chunksize;
@@ -286,6 +285,7 @@ namespace Vintagestory.ServerMods
                         underWater = true;
                         continue;
                     }
+
                     if (blockId == gcfg.waterBlockId || blockId == boilingWaterBlockId)
                     {
                         underWater = true;

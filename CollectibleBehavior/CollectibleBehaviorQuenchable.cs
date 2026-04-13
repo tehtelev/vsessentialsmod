@@ -295,21 +295,21 @@ namespace Vintagestory.GameContent
                 int timesTempered = inSlot.Itemstack.Attributes.GetInt("temperIteration", 0);
                 if (timesTempered > 0)
                 {
-                    dsc.AppendLine(Lang.Get("Times tempered: {0}", timesTempered));
+                    dsc.AppendLine(Lang.Get("quenchable-tempered-amount", timesTempered));
                 }
-                dsc.AppendLine(Lang.Get("Times quenched: {0}", timesQuenched));
-                dsc.AppendLine(Lang.Get("Quench shatter chance: {0:0.#%}", GetShatterChance(world, inSlot.Itemstack)));
-                dsc.AppendLine(Lang.Get("Power gain: {0:\\+0.#%;0.#%}", GetPowerValue(world, inSlot.Itemstack)));
-                dsc.AppendLine(Lang.Get("Durability gain: {0:\\+0.#%;0.#%}", GetDurationBonus(world, inSlot.Itemstack)));
+                dsc.AppendLine(Lang.Get("quenchable-quenched-amount", timesQuenched));
+                dsc.AppendLine(Lang.Get("quenchable-shatter-chance", GetShatterChance(world, inSlot.Itemstack)));
+                dsc.AppendLine(Lang.Get("quenchable-power-gain", GetPowerValue(world, inSlot.Itemstack)));
+                dsc.AppendLine(Lang.Get("quenchable-durability-gain", GetDurationBonus(world, inSlot.Itemstack)));
             }
 
             if (GetState(inSlot.Itemstack) == "quench")
             {
-                dsc.AppendLine(Lang.Get("<i>Has reached quenching temperature</i>"));
+                dsc.AppendLine(Lang.Get("quenchable-reached-quenching-temperature"));
             }
             if (GetState(inSlot.Itemstack) == "temper")
             {
-                dsc.AppendLine(Lang.Get("<i>Has reached tempering temperature</i>"));
+                dsc.AppendLine(Lang.Get("quenchable-reached-tempering-temperature"));
             }
 
         }

@@ -306,8 +306,9 @@ namespace Vintagestory.ServerMods
                         xRel = (float)(posAsVec.X % chunksize) / chunksize;
                         zRel = (float)(posAsVec.Z % chunksize) / chunksize;
 
+                        // We check temperature at 109% of sea level for the sake of consistency (no polar bears on tall mountains)
                         climate = GameMath.BiLerpRgbColor(xRel, zRel, climateUpLeft, climateUpRight, climateBotLeft, climateBotRight);
-                        temp = Climate.GetScaledAdjustedTemperatureFloat((climate >> 16) & 0xff, (int)posAsVec.Y - TerraGenConfig.seaLevel);
+                        temp = Climate.GetScaledAdjustedTemperatureFloat((climate >> 16) & 0xff, (int)(TerraGenConfig.seaLevel * 0.09));
                         rain = ((climate >> 8) & 0xff) / 255f;
                         forestDensity = GameMath.BiLerp(forestUpLeft, forestUpRight, forestBotLeft, forestBotRight, xRel, zRel) / 255f;
                         shrubDensity = GameMath.BiLerp(shrubsUpLeft, shrubsUpRight, shrubsBotLeft, shrubsBotRight, xRel, zRel) / 255f;

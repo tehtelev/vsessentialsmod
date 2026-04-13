@@ -573,11 +573,11 @@ namespace Vintagestory.GameContent
 
             rainParticle.MinPos.Set(particlePos.X - 30 + dx, particlePos.Y + 15 + dy, particlePos.Z - 30 + dz);
             rainParticle.WithTerrainCollision = false;
-            rainParticle.MinQuantity = 1000 * plevel;
+            rainParticle.MinQuantity = 1200 * plevel;
             rainParticle.LifeLength = 1f;
             rainParticle.AddQuantity = 25 * plevel;
-            rainParticle.MinSize = 0.15f * (0.5f + conds.Rainfall); // * weatherData.PrecParticleSize;
-            rainParticle.MaxSize = 0.22f * (0.5f + conds.Rainfall); // weatherData.PrecParticleSize;
+            rainParticle.MinSize = 1.3f*0.15f * (0.5f + conds.Rainfall * 0.7f); // * weatherData.PrecParticleSize;
+            rainParticle.MaxSize = 1.3f*0.22f * (0.5f + conds.Rainfall * 0.7f); // weatherData.PrecParticleSize;
             rainParticle.Color = rainParticleColor;
 
             rainParticle.MinVelocity.Set(-0.025f + 8 * windSpeed.X, -10f, -0.025f + 8 * windSpeed.Z);
@@ -594,7 +594,7 @@ namespace Vintagestory.GameContent
             splashParticles.ShouldSwimOnLiquid = true;
             splashParticles.Color = rainParticleColor;
 
-            float cnt = 100 * plevel;
+            float cnt = 300 * plevel;
 
             for (int i = 0; i < cnt; i++)
             {

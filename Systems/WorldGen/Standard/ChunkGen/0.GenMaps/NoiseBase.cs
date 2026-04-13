@@ -1,4 +1,4 @@
-﻿using SkiaSharp;
+using SkiaSharp;
 using Vintagestory.API.Util;
 using Vintagestory.ServerMods.NoObf;
 
@@ -139,8 +139,30 @@ namespace Vintagestory.ServerMods
                         }
                     }
 
-                    bitmap.SetPixel(i, j,
-                        new SKColor((byte)((num >> 16) & 0xFF), (byte)((num >> 8) & 0xFF), (byte)(num & 0xFF)));
+                    bitmap.SetPixel(i, j, new SKColor((byte)((num >> 16) & 0xFF), (byte)((num >> 8) & 0xFF), (byte)(num & 0xFF)));
+                }
+            }
+
+            bitmap.Save("map-" + name + ".png");
+        }
+
+
+        public static void DebugDrawBitmap(byte[] values, int sizeX, int sizeZ, string name)
+        {
+            if (!Debug)
+            {
+                return;
+            }
+
+            SKBitmap bitmap = new SKBitmap(sizeX, sizeZ);
+            for (int i = 0; i < sizeX; i++)
+            {
+                for (int j = 0; j < sizeZ; j++)
+                {
+                    int num = values[j * sizeX + i];
+                    num = num | (num << 8) | (num << 16);
+
+                    bitmap.SetPixel(i, j, new SKColor((byte)((num >> 16) & 0xFF), (byte)((num >> 8) & 0xFF), (byte)(num & 0xFF)));
                 }
             }
 

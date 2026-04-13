@@ -280,7 +280,7 @@ public class AiTaskMeleeAttackR : AiTaskBaseTargetableR
         tree.SetString("dmgTier", Lang.Get("Damage tier: {0}", Config.DamageTier));
         if (ShowExtraDamageInfo)
         {
-            tree.SetString("dmgDamage", Lang.Get("Damage: {0}", Config.Damage));
+            tree.SetString("dmgDamage", Lang.Get("melee-attack-task-damage", Config.Damage));
             tree.SetString("dmgType", Lang.Get("Damage type: {0}", Lang.Get($"{Config.DamageType}")));
         }
     }

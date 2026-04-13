@@ -121,7 +121,7 @@ namespace Vintagestory.GameContent
 
         public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
         {
-            dsc.AppendLine(Lang.Get("{0} {1} damage when thrown", config.Damage, Lang.Get(config.DamageType.ToString())));
+            dsc.AppendLine(Lang.Get("throwable-damage-and-damagetype-when-thrown", config.Damage, Lang.Get(config.DamageType.ToString())));
         }
 
 

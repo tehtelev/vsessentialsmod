@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Text;
 using Vintagestory.API.Client;
@@ -69,15 +69,19 @@ namespace Vintagestory.GameContent
             {
                 prog.BindTexture2D("tex2d", tex.TextureId, 0);
                 prog.UniformMatrix("projectionMatrix", api.Render.CurrentProjectionMatrix);
+
+                float scaleX = (tex.Width + hover) * 0.5f * IconScale;
+                float scaleY = (tex.Height + hover) * 0.5f * IconScale;
+
                 mvMat
                     .Set(api.Render.CurrentModelviewMatrix)
                     .Translate(x, y, 60)
-                    .Scale(tex.Width + hover, tex.Height + hover, 0)
-                    .Scale(0.5f * IconScale, 0.5f * IconScale, 0)
+                    .Scale(scaleX, scaleY, 0)
                 ;
 
                 // Shadow
-                var shadowMvMat = mvMat.Clone().Scale(1.25f, 1.25f, 1.25f);
+                var uiscale = RuntimeEnv.GUIScale;
+                var shadowMvMat = mvMat.Clone().Scale(1.1f, 1.1f, 1.1f).Translate(1.25 * uiscale / scaleX, 1.25 * uiscale / scaleY, 0);
                 prog.Uniform("rgbaIn", new Vec4f(0, 0, 0, 0.6f));
                 prog.UniformMatrix("modelViewMatrix", shadowMvMat.Values);
                 api.Render.RenderMesh(wpLayer.quadModel);

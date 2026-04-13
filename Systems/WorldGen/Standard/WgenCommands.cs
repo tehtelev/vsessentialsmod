@@ -332,7 +332,7 @@ namespace Vintagestory.ServerMods
                 .BeginSubCommand("region")
                     .WithDescription("Extract already generated noise map data from the current region")
                     .RequiresPlayer()
-                    .WithArgs(parsers.WordRange("sub_command", "climate", "ore", "forest", "upheavel", "ocean", "oretopdistort", "patches", "rockstrata", "gprov", "gprovi", "landform", "landformi"), parsers.OptionalBool("dolerp"), parsers.OptionalWord("orename"))
+                    .WithArgs(parsers.WordRange("sub_command", "climate", "ore", "forest", "animal", "upheavel", "ocean", "oretopdistort", "patches", "rockstrata", "gprov", "gprovi", "landform", "landformi"), parsers.OptionalBool("dolerp"), parsers.OptionalWord("orename"))
                     .HandleWith(OnCmdRegion)
                 .EndSubCommand()
                 .BeginSubCommand("regions")
@@ -438,6 +438,32 @@ namespace Vintagestory.ServerMods
 
                 case "ocean":
                     DrawMapRegion(DebugDrawMode.FirstByteGrayscale, args.Caller, mapRegion.OceanMap, "ocean", dolerp, regionX, regionZ, TerraGenConfig.oceanMapScale);
+                    break;
+
+                case "animal":
+                    foreach (var val in mapRegion.AnimalSpawnMaps)
+                    {
+                        DrawMapRegion(args.Caller, val.Value, val.Key, dolerp, regionX, regionZ, TerraGenConfig.animalMapScale);
+                    }
+
+                    foreach (var etype in api.World.EntityTypes)
+                    {
+                        var wgenmapcode = etype.Server?.SpawnConditions?.Worldgen?.MapCode;
+                        var runtimemapcode = etype.Server?.SpawnConditions?.Runtime?.MapCode;
+
+                        if (wgenmapcode != null || runtimemapcode != null)
+                        {
+                            if (wgenmapcode == runtimemapcode)
+                            {
+                                api.Logger.Notification("{0} uses map '{1}' for worldgen and runtime spawn", etype.Code, wgenmapcode);
+                            } else
+                            {
+                                api.Logger.Notification("{0} uses map '{1}' for worldgen, map '{2}' for runtime spawn", etype.Code, wgenmapcode, runtimemapcode);
+                            }
+                                
+                        }
+                    }
+
                     break;
 
 
@@ -793,6 +819,7 @@ namespace Vintagestory.ServerMods
             NoiseBase.Debug = false;
             return TextCommandResult.Success("Mushroom maps generated");
         }
+
 
         private TextCommandResult OnCmdGenmapOre(TextCommandCallingArgs args)
         {
@@ -2140,6 +2167,22 @@ namespace Vintagestory.ServerMods
             else
             {
                 NoiseBase.DebugDrawBitmap(mode, map.Data, map.Size, prefix + "-" + regionX + "-" + regionZ);
+                player.SendMessage(caller.FromChatGroupId, "Original " + prefix + " map generated.", EnumChatType.CommandSuccess);
+            }
+        }
+
+        void DrawMapRegion(Caller caller, ByteDataMap2D map, string prefix, bool lerp, int regionX, int regionZ, int scale)
+        {
+            var player = caller.Player as IServerPlayer;
+            if (lerp)
+            {
+                byte[] lerped = GameMath.BiLerpColorMap(map, scale);
+                NoiseBase.DebugDrawBitmap(lerped, map.InnerSize * scale, map.InnerSize * scale, prefix + "-" + regionX + "-" + regionZ + "-l");
+                player.SendMessage(caller.FromChatGroupId, "Lerped " + prefix + " map generated.", EnumChatType.CommandSuccess);
+            }
+            else
+            {
+                NoiseBase.DebugDrawBitmap(map.Data, map.Size, map.Size, prefix + "-" + regionX + "-" + regionZ);
                 player.SendMessage(caller.FromChatGroupId, "Original " + prefix + " map generated.", EnumChatType.CommandSuccess);
             }
         }

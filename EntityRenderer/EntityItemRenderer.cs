@@ -14,6 +14,7 @@ namespace Vintagestory.GameContent
     {
         int itemCount;
         ICoreClientAPI capi;
+        ICoreServerAPI sapi;
 
         public double RenderOrder => 1;
 
@@ -26,7 +27,13 @@ namespace Vintagestory.GameContent
 
         public override bool ShouldLoad(EnumAppSide forSide)
         {
-            return forSide == EnumAppSide.Client;
+            return true;
+        }
+
+        public override void StartServerSide(ICoreServerAPI api)
+        {
+            sapi = api;
+            api.Event.RegisterGameTickListener(onServerTick, 1001);
         }
 
         public override void StartClientSide(ICoreClientAPI api)
@@ -47,6 +54,11 @@ namespace Vintagestory.GameContent
             EntityItemRenderer.RunWittySkipRenderAlgorithm = itemCount > 400;
             EntityItemRenderer.RenderModulo = itemCount / 200;
             EntityItemRenderer.LastPos.Set(-99, -99, -99);
+        }
+
+        private void onServerTick(float dt)
+        {
+            EntityBehaviorPassivePhysics.UsePhysicsDormancyStateServer = sapi.World.LoadedEntities.Count > 1000;
         }
     }
 

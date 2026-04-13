@@ -72,7 +72,7 @@ namespace Vintagestory.GameContent
             {
                 case ICoreServerAPI sapi when api.World.Config.GetBool("allowMap"):
                     sapi.Event.PlayerJoin += ServerEvent_PlayerJoin;
-                    sapi.Event.PlayerLeave += ServerEvent_PlayerLeave;
+                    sapi.Event.PlayerDisconnect += ServerEvent_PlayerDisconnect;
 
                     sapi.Event.RegisterGameTickListener(OnTick, 100);
                     break;
@@ -166,7 +166,7 @@ namespace Vintagestory.GameContent
             playerQueue.Enqueue(byPlayer);
         }
 
-        private void ServerEvent_PlayerLeave(IServerPlayer byPlayer)
+        private void ServerEvent_PlayerDisconnect(IServerPlayer byPlayer)
         {
             for (int i = playerQueue.Count; i > 0; i--)
             {

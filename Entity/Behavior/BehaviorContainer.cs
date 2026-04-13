@@ -81,7 +81,7 @@ namespace Vintagestory.GameContent
             {
                 foreach (var val in collectibleDict)
                 {
-                    gearShape.Textures[val.Key] = val.Value.Base;
+                    gearShape.Textures[val.Key] = val.Value.Baked.BakedName;
                 }
             }
         }
