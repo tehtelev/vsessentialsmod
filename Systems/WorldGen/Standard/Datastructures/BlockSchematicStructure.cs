@@ -249,7 +249,7 @@ namespace Vintagestory.ServerMods
 
                         if (p > 0)
                         {
-                            if (displaceWater) blockAccessor.SetBlock(0, curPos, BlockLayersAccess.Fluid);
+                            if (displaceWater && !block.ForFluidsLayer) blockAccessor.SetBlock(0, curPos, BlockLayersAccess.Fluid);
                             else if (block.Id != 0 && !block.SideSolid.All)
                             {
                                 aboveLiqBlock = blockAccessor.GetBlockAbove(curPos, 1, BlockLayersAccess.Fluid);

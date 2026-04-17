@@ -348,7 +348,7 @@ namespace Vintagestory.GameContent
                     ItemRenderInfo renderInfo = capi.Render.GetItemStackRenderInfo(slot, EnumItemRenderTarget.HandTpOff, dt);
 
                     string transformCode = tongStack?.ItemAttributes["transformCode"].AsString();
-                    if (!stack.ItemAttributes[transformCode].Exists) transformCode = "onTongTransform";
+                    if (stack.ItemAttributes?[transformCode]?.Exists != true) transformCode = "onTongTransform";
 
                     renderInfo.Transform = stack.ItemAttributes?[transformCode].AsObject(DefaultTongTransform) ?? DefaultTongTransform;
                     RenderItem(dt, isShadowPass, stack, apap, renderInfo);

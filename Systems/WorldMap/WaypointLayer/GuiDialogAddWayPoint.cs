@@ -78,11 +78,10 @@ namespace Vintagestory.GameContent
                 return;
             }
 
-            JsonObject parsedFile = new(JObject.Parse(File.ReadAllText(path)));
-
             Dictionary<string, string>? loadedNames = null;
             try
             {
+                JsonObject parsedFile = new(JObject.Parse(File.ReadAllText(path)));
                 loadedNames = parsedFile.AsObject<Dictionary<string, string>>();
             }
             catch (Exception exception)

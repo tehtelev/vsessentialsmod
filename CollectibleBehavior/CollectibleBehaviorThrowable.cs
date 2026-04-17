@@ -28,9 +28,7 @@ namespace Vintagestory.GameContent
         public float ForwardOffset = -0.21f;
         public float ParallaxDistance = 20;
 
-        public CollectibleBehaviorThrowable(CollectibleObject collObj) : base(collObj)
-        {
-        }
+        public CollectibleBehaviorThrowable(CollectibleObject collObj) : base(collObj) { }
 
         public override void Initialize(JsonObject properties)
         {

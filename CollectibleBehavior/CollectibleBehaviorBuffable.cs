@@ -6,7 +6,6 @@ using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.Server;
 using Vintagestory.API.Common.CommandAbbr;
-using System;
 
 namespace Vintagestory.GameContent
 {
@@ -88,7 +87,7 @@ namespace Vintagestory.GameContent
             } else
             {
                 return Lang.Get("mulbuff-" + Code + "-" + StatCode, Multiplier - 1, RemainingDurability);
-            }            
+            }
         }
 
         public TreeAttribute ToAttribute()
@@ -113,6 +112,22 @@ namespace Vintagestory.GameContent
                 FlatChange = bufftree.GetFloat("flatchange")
             };
         }
+    }
+
+    public enum EnumBuffAddType
+    {
+        /// <summary>
+        /// Adds a new buff
+        /// </summary>
+        AddStat,
+        /// <summary>
+        /// Replaces the value if the buff already exists
+        /// </summary>
+        ReplaceOnDuplicate,
+        /// <summary>
+        /// Adds the values to the existing buff if the buff already exists
+        /// </summary>
+        AddOnDuplicate
     }
 
     public class CollectibleBehaviorBuffable : CollectibleBehavior
@@ -150,13 +165,13 @@ namespace Vintagestory.GameContent
                     Code = "hardened",
                     Multiplier = 1 + powervalue,
                     StatCode = "attackpower"
-                }, true);
+                }, EnumBuffAddType.AddOnDuplicate);
                 AddBuff(stack, new AppliedCollectibleBuff()
                 {
                     Code = "hardened",
                     Multiplier = 1 + powervalue,
                     StatCode = "miningspeed"
-                }, true);
+                }, EnumBuffAddType.AddOnDuplicate);
             }
 
             if (durationbonus > 0)
@@ -166,7 +181,7 @@ namespace Vintagestory.GameContent
                     Code = "hardened",
                     Multiplier = 1 + durationbonus,
                     StatCode = "maxdurability"
-                }, true);
+                }, EnumBuffAddType.AddOnDuplicate);
             }
         }
 
@@ -204,7 +219,7 @@ namespace Vintagestory.GameContent
         /// <param name="stack"></param>
         /// <param name="buff"></param>
         /// <param name="addOnDuplicate">If true, adds the buff values to any existing ones, if the buff code matches</param>
-        public void AddBuff(ItemStack stack, AppliedCollectibleBuff buff, bool addOnDuplicate = false)
+        public void AddBuff(ItemStack stack, AppliedCollectibleBuff buff, EnumBuffAddType mode = EnumBuffAddType.AddStat)
         {
             var buffstree = stack.Attributes.GetTreeAttribute("buffs");
             if (buffstree == null)
@@ -215,14 +230,23 @@ namespace Vintagestory.GameContent
             int index = 0;
             while (buffstree.HasAttribute(index.ToString()))
             {
-                if (addOnDuplicate)
+                if (mode == EnumBuffAddType.AddOnDuplicate || mode == EnumBuffAddType.ReplaceOnDuplicate)
                 {
                     var bufftree = buffstree[index.ToString()] as TreeAttribute;
-                    if (bufftree?.GetString("code") == buff.Code)
+                    if (bufftree?.GetString("code") == buff.Code && bufftree?.GetString("statcode") == buff.StatCode)
                     {
-                        bufftree.SetInt("durability", bufftree.GetInt("durability") + buff.RemainingDurability);
-                        bufftree.SetFloat("multiplier", bufftree.GetFloat("multiplier") + (buff.Multiplier-1));
-                        bufftree.SetFloat("flatchange", bufftree.GetFloat("flatchange") + buff.FlatChange);
+                        if (mode == EnumBuffAddType.ReplaceOnDuplicate)
+                        {
+                            bufftree.SetInt("durability", buff.RemainingDurability);
+                            bufftree.SetFloat("multiplier", buff.Multiplier);
+                            bufftree.SetFloat("flatchange", buff.FlatChange);
+                        }
+                        else
+                        {
+                            bufftree.SetInt("durability", bufftree.GetInt("durability") + buff.RemainingDurability);
+                            bufftree.SetFloat("multiplier", bufftree.GetFloat("multiplier") + (buff.Multiplier-1));
+                            bufftree.SetFloat("flatchange", bufftree.GetFloat("flatchange") + buff.FlatChange);
+                        }
                         return;
                     }
                 }
@@ -293,9 +317,14 @@ namespace Vintagestory.GameContent
             return baseDamage;
         }
 
-        public override float GetMiningSpeed(ItemStack itemstack, BlockSelection blockSel, Block block, IPlayer forPlayer, ref EnumHandling bhHandling)
+        public override float GetMiningSpeedModifier(ItemStack itemstack, ref EnumHandling bhHandling)
         {
             return applyBuffs(itemstack, 1f, "miningspeed", ref bhHandling);
+        }
+
+        public override float GetMiningSpeed(ItemStack itemstack, BlockSelection blockSel, Block block, IPlayer forPlayer, ref EnumHandling bhHandling)
+        {
+            return GetMiningSpeedModifier(itemstack, ref bhHandling);
         }
 
         public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
@@ -330,5 +359,11 @@ namespace Vintagestory.GameContent
             return currentvalue;
         }
 
+        public void ApplyBuffs(ItemStack stack, List<AppliedCollectibleBuff> buffs, EnumBuffAddType mode = EnumBuffAddType.AddStat)
+        {
+            foreach (var buff in buffs) {
+                AddBuff(stack, buff, mode);
+            }
+        }
     }
 }

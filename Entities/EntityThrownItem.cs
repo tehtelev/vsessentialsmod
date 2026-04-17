@@ -14,11 +14,7 @@ namespace Vintagestory.GameContent
     public class EntityThrownItem : EntityProjectileBase
     {
         public float collidedAccum;
-
         public float VerticalImpactBreakChance = 0f;
-        public float HorizontalImpactBreakChance = 0.8f;
-        public float EntityImpactBreakChance = 0.8f;
-
         public float ImpactParticleSize = 1f;
         public int ImpactParticleCount = 20;
 
@@ -130,7 +126,7 @@ namespace Vintagestory.GameContent
                         World.PlaySoundFor(new AssetLocation("sounds/player/projectilehit"), (FiredBy as EntityPlayer).Player, false, 24);
                     }
 
-                    if (World.Rand.NextDouble() > 1 - EntityImpactBreakChance)
+                    if (World.Rand.NextDouble() > DropOnImpactChance)
                     {
                         Die();
                     }
@@ -166,7 +162,7 @@ namespace Vintagestory.GameContent
                     pos.Motion.X = xdir * motionBeforeCollide.X * 0.4f;
                     pos.Motion.Z = zdir * motionBeforeCollide.Z * 0.4f;
 
-                    if (strength > 0.1f && World.Rand.NextDouble() > 1 - HorizontalImpactBreakChance)
+                    if (strength > 0.1f && World.Rand.NextDouble() > DropOnImpactChance)
                     {
                         Die();
                     }

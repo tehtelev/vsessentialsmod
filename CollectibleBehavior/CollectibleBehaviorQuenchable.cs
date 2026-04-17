@@ -1,8 +1,8 @@
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
@@ -41,7 +41,7 @@ namespace Vintagestory.GameContent
 
             var cbq = slot.Itemstack.Collectible.GetBehavior<CollectibleBehaviorQuenchable>();
 
-            var nextTemperature = Math.Max(20, stackTemp - 5) * dt * 50;
+            var nextTemperature = Math.Max(20, stackTemp - 200 * dt);
 
             cbq?.IsGettingCooled(world, slot, pos, dt, nextTemperature);
             if (slot.Empty) return false;
@@ -79,7 +79,7 @@ namespace Vintagestory.GameContent
             IAsset asset = api.Assets.Get("worldproperties/block/metal.json");
             var metaltypes = asset.ToObject<MetalWorldProperties>();
 
-            
+
             string metalCode = collObj.Variant[metalGroupCode];
             if (metalCode == null)
             {
@@ -212,7 +212,7 @@ namespace Vintagestory.GameContent
                 {
                     applyQuenchedStats(world, itemstack);
                 }
-                
+
                 if (currentState == "temper" && world.Calendar.ElapsedHours - itemstack.Attributes.GetDouble("lastintemperrangetotalhours", -999) > 1)
                 {
                     applyTemperedStats(world, itemstack);
@@ -238,9 +238,25 @@ namespace Vintagestory.GameContent
 
             SetShatterChance(world, itemstack, newShatterChance);
             SetPowerValue(world, itemstack, newPowerValue);
+            List<AppliedCollectibleBuff> buffs = new ();
+            if (newPowerValue != 0 && collObj.GetBehavior<CollectibleBehaviorBuffable>() != null)
+            {
+                buffs.Add(new AppliedCollectibleBuff()
+                {
+                    Code = "hardened",
+                    Multiplier = 1 + newPowerValue,
+                    StatCode = "attackpower"
+                });
+                buffs.Add(new AppliedCollectibleBuff()
+                {
+                    Code = "hardened",
+                    Multiplier = 1 + newPowerValue,
+                    StatCode = "miningspeed"
+                });
+            }
 
             itemstack.Attributes.SetInt("temperIteration", temperIteration + 1);
-            // applyBuffs(itemstack); - why is this here?
+            if (newPowerValue != 0 && buffs.Count > 0) applyBuffs(itemstack, buffs, EnumBuffAddType.ReplaceOnDuplicate);
         }
 
 
@@ -256,26 +272,57 @@ namespace Vintagestory.GameContent
             // Diminishing returns curve: 0.1/(1+x*0.2)
             // https://pfortuny.net/fooplot.com/#W3sidHlwZSI6MCwiZXEiOiIwLjEvKDEreCowLjIpIiwiY29sb3IiOiIjMDAwMDAwIn0seyJ0eXBlIjoxMDAwLCJ3aW5kb3ciOlsiMCIsIjE1IiwiMCIsIjAuMSJdLCJzaXplIjpbNjQ4LDM5OF19XQ--
 
+            List<AppliedCollectibleBuff> buffs = new ();
+            var isBuffable = collObj.GetBehavior<CollectibleBehaviorBuffable>() != null;
             if (clayCovered)
             {
                 var dbonus = GetDurationBonus(world, itemstack);
-                SetDurationBonus(world, itemstack, dbonus + 0.2f / (1 + quenchIteration * 0.2f));
+                var newDurability = dbonus + 0.2f / (1 + quenchIteration * 0.2f);
+                SetDurationBonus(world, itemstack, newDurability);
+                if (isBuffable)
+                {
+                    buffs.Add(new AppliedCollectibleBuff()
+                    {
+                        Code = "hardened",
+                        Multiplier = 1 + newDurability,
+                        StatCode = "maxdurability"
+                    });
+                }
             } else
             {
                 var powervalue = GetPowerValue(world, itemstack);
-                SetPowerValue(world, itemstack, powervalue + 0.1f / (1 + quenchIteration * 0.2f));
+                var newPower = powervalue + 0.1f / (1 + quenchIteration * 0.2f);
+                SetPowerValue(world, itemstack, newPower);
+
+                if (isBuffable)
+                {
+                    buffs.Add(new AppliedCollectibleBuff()
+                    {
+                        Code = "hardened",
+                        Multiplier = 1 + newPower,
+                        StatCode = "attackpower"
+                    });
+                    buffs.Add(new AppliedCollectibleBuff()
+                    {
+                        Code = "hardened",
+                        Multiplier = 1 + newPower,
+                        StatCode = "miningspeed"
+                    });
+                }
             }
 
             itemstack.Attributes.SetInt("quenchIteration", quenchIteration + 1);
             itemstack.Attributes.SetBool("clayCovered", false);
-            applyBuffs(itemstack);
+
+            if(buffs.Count > 0) applyBuffs(itemstack, buffs, EnumBuffAddType.ReplaceOnDuplicate);
         }
 
-        private void applyBuffs(ItemStack itemStack)
+        private void applyBuffs(ItemStack stack, List<AppliedCollectibleBuff> buffs, EnumBuffAddType mode = EnumBuffAddType.AddStat)
         {
             var cbb = collObj.GetBehavior<CollectibleBehaviorBuffable>();
             if (cbb == null) return;
-            cbb.applyQuenchableBuffs(itemStack, itemStack);
+
+            cbb.ApplyBuffs(stack, buffs, mode);
         }
 
         public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
