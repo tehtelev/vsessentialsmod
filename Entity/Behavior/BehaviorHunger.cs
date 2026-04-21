@@ -33,7 +33,7 @@ namespace Vintagestory.GameContent
         EntityAgent entityAgent;
 
         float hungerCounter;
-        int sprintCounter;
+        float sprintCounter;
 
         long listenerId;
         long lastMoveMs;
@@ -221,37 +221,39 @@ namespace Vintagestory.GameContent
         {
             detox(deltaTime);
 
+            var world = entity.World;
             if (entity is EntityPlayer plr)
             {
-                EnumGameMode mode = entity.World.PlayerByUid(plr.PlayerUID).WorldData.CurrentGameMode;
-
-                if (mode == EnumGameMode.Creative || mode == EnumGameMode.Spectator) return;
-
-                if (plr.Controls.TriesToMove || plr.Controls.Jump || plr.Controls.LeftMouseDown || plr.Controls.RightMouseDown)
-                {
-                    lastMoveMs = entity.World.ElapsedMilliseconds;
-                }
+                if (world.PlayerByUid(plr.PlayerUID).WorldData.CurrentGameMode is EnumGameMode.Creative or EnumGameMode.Spectator) return;
             }
 
-            if (entityAgent != null && entityAgent.Controls.Sprint) sprintCounter++;
+            var controls = entityAgent?.Controls;
+            if (controls != null)
+            {
+                if (controls.TriesToMove || controls.Jump || controls.LeftMouseDown || controls.RightMouseDown)
+                {
+                    lastMoveMs = world.ElapsedMilliseconds;
+                }
+                if (controls.Sprint) sprintCounter += deltaTime;
+            }
 
-            if (hungerCounter < 0) hungerCounter = 0f;    // just in case is still somehow negative, including from mods
+            if (hungerCounter < 0) hungerCounter = 0f; // Just in case the value is somehow negative, including from mods
             hungerCounter += deltaTime;
 
             // Once every 10s
             if (hungerCounter > 10)
             {
-                var isStandingStill = (entity.World.ElapsedMilliseconds - lastMoveMs) > 3000;
-                var multiplierPerGameSec = entity.Api.World.Calendar.SpeedOfTime * entity.Api.World.Calendar.CalendarSpeedMul;
-                // 60 * 0,5 = 30 (SpeedOfTime * CalendarSpeedMul) is the default, so we scale according to the default time multiplier
-                var satLossMultiplier = GlobalConstants.HungerSpeedModifier / 30;
-                if(isStandingStill) satLossMultiplier /= 4;
+                // First we set up how much satiety we actually want to remove
+                var satietyDrain = 0.96f * hungerCounter; // First how much satiety to drain per total seconds
+                satietyDrain += 2.4f * sprintCounter; // Second how much satiety to drain per second we were sprinting
 
-                satLossMultiplier *= 1.2f * (8 + sprintCounter / 15f) / 10f;
+                // We give a bonus when the entity is not moving
+                var isStandingStill = (world.ElapsedMilliseconds - lastMoveMs) > 3000;
+                if (isStandingStill) satietyDrain /= 4;
 
-                satLossMultiplier *= entity.Stats.GetBlended("hungerrate");
-
-                ReduceSaturation(satLossMultiplier * multiplierPerGameSec);
+                // 60 * 0.5 = 30 (SpeedOfTime * CalendarSpeedMul) is the default, so we scale according to the default time multiplier
+                satietyDrain *= world.Calendar.SpeedOfTime * world.Calendar.CalendarSpeedMul / 30;
+                ReduceSaturation(satietyDrain / 10f); // Divided by 10 to offset the 10x multiplication inside the method
 
                 hungerCounter = 0;
                 sprintCounter = 0;
@@ -290,6 +292,7 @@ namespace Vintagestory.GameContent
             bool isondelay = false;
 
             satLossMultiplier *= GlobalConstants.HungerSpeedModifier;
+            satLossMultiplier *= entity.Stats.GetBlended("hungerrate");
 
             if (SaturationLossDelayFruit > 0)
             {
@@ -343,18 +346,13 @@ namespace Vintagestory.GameContent
 
             UpdateNutrientHealthBoost();
 
-            if (isondelay)
-            {
-                hungerCounter = 0f;
-                return true;
-            }
+            if (isondelay) return true;
 
             float prevSaturation = Saturation;
 
             if (prevSaturation > 0)
             {
                 Saturation = Math.Max(0, prevSaturation - satLossMultiplier * 10);
-                sprintCounter = 0;
             }
 
             return false;
@@ -407,7 +405,6 @@ namespace Vintagestory.GameContent
             if (Saturation <= 0)
             {
                 entity.ReceiveDamage(new DamageSource() { Source = EnumDamageSource.Internal, Type = EnumDamageType.Hunger }, 0.125f);
-                sprintCounter = 0;
             }
         }
 
@@ -418,7 +415,7 @@ namespace Vintagestory.GameContent
 
         public override void OnEntityReceiveDamage(DamageSource damageSource, ref float damage)
         {
-            if (damageSource is not { Type: EnumDamageType.Heal, Source: EnumDamageSource.Revive }) return;
+            if (damageSource.Type != EnumDamageType.Heal || damageSource.Source != EnumDamageSource.Revive) return;
 
             if (entity.Attributes.GetBool("noSatietyRestoreOnRevive"))
             {

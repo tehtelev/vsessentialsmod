@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
@@ -46,9 +46,16 @@ namespace Vintagestory.GameContent
             lastattackingEntity = targetEntity;
         }
 
-        public override bool IgnoreDamageFrom(Entity attacker)
+        public override bool CanSense(Entity e, double range)
         {
-            return attacker == (guardedEntity ??= GetGuardedEntity()) || base.IgnoreDamageFrom(attacker);
+            if (!base.CanSense(e, range)) return false;
+            if (e == guardedEntity) return false;
+
+            var tasks = e.GetBehavior<EntityBehaviorTaskAI>()?.TaskManager.ActiveTasksBySlot;
+            return (e == lastattackingEntity && e.Alive) || tasks?.FirstOrDefault(task => {
+                return task is AiTaskBaseTargetable at && at.TargetEntity == guardedEntity && at.AggressiveTargeting;
+            }) != null;
         }
+
     }
 }

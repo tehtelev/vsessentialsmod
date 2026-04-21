@@ -15,6 +15,12 @@ using Vintagestory.API.Util;
 
 namespace Vintagestory.GameContent
 {
+    public interface IFallingBlockMeshSource
+    {
+        string GetCacheKey(EntityBlockFalling fallingBlock);
+        void OnFallingBlockTesselation(EntityBlockFalling fallingBlock, ITerrainMeshPool mesher, ITesselatorAPI tessThreadTesselator);
+    }
+
     public class ModSystemRenderFallingBlocksFast : ModSystem, IRenderer, ITerrainMeshPool
     {
         public double RenderOrder => 0.4;
@@ -104,13 +110,13 @@ namespace Vintagestory.GameContent
 
         private void genMesh(EntityBlockFalling entity)
         {
+            int posx = entity.blockEntityAttributes?.GetInt("posx", entity.initialPos.X) ?? entity.initialPos.X;
+            int posy = entity.blockEntityAttributes?.GetInt("posy", entity.initialPos.Y) ?? entity.initialPos.Y;
+            int posz = entity.blockEntityAttributes?.GetInt("posz", entity.initialPos.Z) ?? entity.initialPos.Z;
+            BlockEntity be = capi.World.BlockAccessor.GetBlockEntity(new BlockPos(posx, posy, posz));
+
             if (!entity.InitialBlockRemoved)
             {
-                int posx = entity.blockEntityAttributes?.GetInt("posx", entity.initialPos.X) ?? entity.initialPos.X;
-                int posy = entity.blockEntityAttributes?.GetInt("posy", entity.initialPos.Y) ?? entity.initialPos.Y;
-                int posz = entity.blockEntityAttributes?.GetInt("posz", entity.initialPos.Z) ?? entity.initialPos.Z;
-
-                BlockEntity be = capi.World.BlockAccessor.GetBlockEntity(new BlockPos(posx, posy, posz));
                 be?.OnTesselation(this, capi.Tesselator);
 
                 if (mesh.VerticesCount > 0)
@@ -126,12 +132,33 @@ namespace Vintagestory.GameContent
             {
                 var dict = ObjectCacheUtil.GetOrCreate(capi, "fallingblockmeshrefs", () => new Dictionary<string, MultiTextureMeshRef>());
 
-                entity.reusedMeshRef = true;
-
-                if (!dict.TryGetValue(entity.Block.Code, out entity.meshRef))
+                string cacheKey = entity.Block.Code;
+                IFallingBlockMeshSource ifbms = be as IFallingBlockMeshSource;
+                if (ifbms != null)
                 {
-                    MeshData mesh = capi.TesselatorManager.GetDefaultBlockMesh(entity.Block);
-                    dict[entity.Block.Code] = entity.meshRef = capi.Render.UploadMultiTextureMesh(mesh);
+                    cacheKey = ifbms.GetCacheKey(entity);
+                }
+
+                entity.reusedMeshRef = true;
+                if (!dict.TryGetValue(cacheKey, out entity.meshRef))
+                {
+                    if (ifbms != null)
+                    {
+                        ifbms.OnFallingBlockTesselation(entity, this, capi.Tesselator);
+                        if (mesh.VerticesCount > 0)
+                        {
+                            mesh.CustomBytes = null;
+                            mesh.CustomFloats = null;
+                            mesh.CustomInts = null;
+                            entity.meshRef = capi.Render.UploadMultiTextureMesh(mesh);
+                        }
+                    }
+                    else
+                    {
+                        mesh = capi.TesselatorManager.GetDefaultBlockMesh(entity.Block);
+                    }
+
+                    dict[cacheKey] = entity.meshRef = capi.Render.UploadMultiTextureMesh(mesh);
                 }
             }
         }
@@ -398,7 +425,6 @@ namespace Vintagestory.GameContent
         public override void Initialize(EntityProperties properties, ICoreAPI api, long InChunkIndex3d)
         {
             ep = api.ModLoader.GetModSystem<EntityPartitioning>();
-
 
             if (removedBlockentity != null)
             {

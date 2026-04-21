@@ -34,13 +34,8 @@ namespace Vintagestory.GameContent
         {
             if (rand.NextDouble() < 0.01 && capi.World.BlockAccessor.GetLightLevel(Position.AsBlockPos, EnumLightLevelType.TimeOfDaySunLight) > 7)
             {
-                var season = capi.World.Calendar.GetSeasonRel(Position.AsBlockPos);
-
                 // 3 times less often outside the summer season
-                if ((season > 0.48 && season < 0.63) || rand.NextDouble() < 0.33)
-                {
-                    return true;
-                }
+                return capi.World.Calendar.GetSeason(Position.AsBlockPos) is EnumSeason.Summer || rand.NextDouble() < 0.33;
             }
 
             return false;

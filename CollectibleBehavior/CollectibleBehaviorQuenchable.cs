@@ -228,6 +228,8 @@ namespace Vintagestory.GameContent
         private void applyTemperedStats(IWorldAccessor world, ItemStack itemstack)
         {
             int temperIteration = itemstack.Attributes.GetInt("temperIteration", 0);
+            int quenchIteration = itemstack.Attributes.GetInt("quenchIteration", 0);
+            if (temperIteration >= quenchIteration) return;
 
             // Diminishing returns curve: 1/(1+x*0.05)
             // More generous than the quenching curve
@@ -327,8 +329,15 @@ namespace Vintagestory.GameContent
 
         public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
         {
+            int timesQuenched = inSlot.Itemstack.Attributes.GetInt("quenchIteration", 0);
+            int temperIteration = inSlot.Itemstack.Attributes.GetInt("temperIteration", 0);
+
             dsc.AppendLine(Lang.Get("itemstack-quenchable", metalProps.quenchMinTemp, metalProps.quenchMaxTemp));
-            dsc.AppendLine(Lang.Get("itemstack-temperable", metalProps.temperMinTemp, metalProps.temperMaxTemp));
+
+            if (timesQuenched > temperIteration)
+            {
+                dsc.AppendLine(Lang.Get("itemstack-temperable", metalProps.temperMinTemp, metalProps.temperMaxTemp));
+            }
 
             bool clayCovered = inSlot.Itemstack.Attributes.GetBool("clayCovered", false);
             if (clayCovered)
@@ -336,25 +345,29 @@ namespace Vintagestory.GameContent
                 dsc.AppendLine(Lang.Get("itemstack-claycovered"));
             }
 
-            int timesQuenched = inSlot.Itemstack.Attributes.GetInt("quenchIteration", 0);
+            int timesTempered = inSlot.Itemstack.Attributes.GetInt("temperIteration", 0);
+            if (timesTempered > 0)
+            {
+                dsc.AppendLine(Lang.Get("quenchable-tempered-amount", timesTempered));
+            }
+
             if (timesQuenched > 0)
             {
-                int timesTempered = inSlot.Itemstack.Attributes.GetInt("temperIteration", 0);
-                if (timesTempered > 0)
-                {
-                    dsc.AppendLine(Lang.Get("quenchable-tempered-amount", timesTempered));
-                }
                 dsc.AppendLine(Lang.Get("quenchable-quenched-amount", timesQuenched));
-                dsc.AppendLine(Lang.Get("quenchable-shatter-chance", GetShatterChance(world, inSlot.Itemstack)));
                 dsc.AppendLine(Lang.Get("quenchable-power-gain", GetPowerValue(world, inSlot.Itemstack)));
                 dsc.AppendLine(Lang.Get("quenchable-durability-gain", GetDurationBonus(world, inSlot.Itemstack)));
             }
+
+            dsc.AppendLine(Lang.Get("quenchable-shatter-chance", GetShatterChance(world, inSlot.Itemstack)));
+
 
             if (GetState(inSlot.Itemstack) == "quench")
             {
                 dsc.AppendLine(Lang.Get("quenchable-reached-quenching-temperature"));
             }
-            if (GetState(inSlot.Itemstack) == "temper")
+
+
+            if (GetState(inSlot.Itemstack) == "temper" && timesQuenched > temperIteration)
             {
                 dsc.AppendLine(Lang.Get("quenchable-reached-tempering-temperature"));
             }

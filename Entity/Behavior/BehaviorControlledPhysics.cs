@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Vintagestory.API;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -84,6 +85,12 @@ public class EntityBehaviorControlledPhysics : PhysicsBehaviorBase, IPhysicsTick
     /// </summary>
     [DocumentAsJson("Optional", "0.035")]
     public float climbDownSpeed = 0.035f;
+
+    /// <summary>
+    /// The height of the step at which a "climb anywhere" creature will instead step instead of going vertical
+    /// </summary>
+    [DocumentAsJson("Optional", "0.355")]
+    public float climbAnywhereStepThreshold = 0.375f;
 
     public override bool ThreadSafe { get { return true; } }     // It's threadsafe for a subtle reason: in OnGameTick(), the only entities for which callOnEntityInside() will be called, are exactly those entities physics-ticked on the main thread, i.e. players and player-controlled mounts
 
@@ -178,6 +185,7 @@ public class EntityBehaviorControlledPhysics : PhysicsBehaviorBase, IPhysicsTick
         stepUpSpeed = attributes["stepUpSpeed"].AsFloat(0.07f);
         climbUpSpeed = attributes["climbUpSpeed"].AsFloat(0.07f);
         climbDownSpeed = attributes["climbDownSpeed"].AsFloat(0.035f);
+        climbAnywhereStepThreshold = attributes["climbAnywhereStepThreshold"].AsFloat(0.375f);
         sneakTestCollisionbox = entity.CollisionBox.Clone().OmniNotDownGrowBy(-0.1f);
         sneakTestCollisionbox.Y2 /= 2;
 
@@ -342,6 +350,7 @@ public class EntityBehaviorControlledPhysics : PhysicsBehaviorBase, IPhysicsTick
                 for (int i = 0; i < collisionBoxes.Length; i++)
                 {
                     double distance = entityBox.ShortestDistanceFrom(collisionBoxes[i], tmpPos);
+                    
                     controls.IsClimbing |= distance < entityProperties.ClimbTouchDistance;
 
                     if (controls.IsClimbing)
@@ -352,20 +361,30 @@ public class EntityBehaviorControlledPhysics : PhysicsBehaviorBase, IPhysicsTick
                 }
             }
 
+            
+
             if (canClimbAnywhere && controls.WalkVector.LengthSq() > 0.00001)
             {
                 BlockFacing walkIntoFace = BlockFacing.FromVector(controls.WalkVector.X, controls.WalkVector.Y, controls.WalkVector.Z);
                 if (walkIntoFace != null)
                 {
+                    var selfy = pos.Y + walkIntoFace.Normali.Y;
                     tmpPos.Set((int)pos.X + walkIntoFace.Normali.X, (int)pos.Y + walkIntoFace.Normali.Y, (int)pos.Z + walkIntoFace.Normali.Z);
                     Block inBlock = blockAccessor.GetBlock(tmpPos, BlockLayersAccess.Default);
-
                     Cuboidf[] collisionBoxes = inBlock.GetCollisionBoxes(blockAccessor, tmpPos);
-                    entity.ClimbingIntoFace = (collisionBoxes != null && collisionBoxes.Length != 0) ? walkIntoFace : null;
+
+                    if (collisionBoxes == null || collisionBoxes.Length == 0)
+                    {
+                        entity.ClimbingIntoFace = null;
+                    }
+                    else
+                    {
+                        entity.ClimbingIntoFace = !entity.OnGround || collisionBoxes.Max(box => box.Y2) > climbAnywhereStepThreshold + selfy - (int)selfy ? walkIntoFace: null;
+                    }
                 }
             }
 
-            if (!controls.IsClimbing)
+            if (!controls.IsClimbing && !controls.IsStepping)
             {
                 float touchDistance = entityProperties.ClimbTouchDistance;
                 int baseY = (int)pos.Y;
@@ -385,7 +404,7 @@ public class EntityBehaviorControlledPhysics : PhysicsBehaviorBase, IPhysicsTick
                         {
                             double distance = entityBox.ShortestDistanceFrom(collisionBoxes[j], tmpPos);
 
-                            if (distance < touchDistance)
+                            if ((collisionBoxes[j].Y2 > climbAnywhereStepThreshold + pos.Y - (int)pos.Y || !entity.OnGround) && distance < touchDistance)
                             {
                                 controls.IsClimbing = true;
                                 entity.ClimbingOnFace = BlockFacing.HORIZONTALS[i];
@@ -428,7 +447,7 @@ public class EntityBehaviorControlledPhysics : PhysicsBehaviorBase, IPhysicsTick
 
             collisionTester.ApplyTerrainCollision(entity, pos, dtFactor, ref newPos, 0, CollisionYExtra);
 
-            if (!entityProperties.CanClimbAnywhere)
+            //if (!entityProperties.CanClimbAnywhere) - we need this now for small stepping
             {
                 controls.IsStepping = HandleSteppingOnBlocks(pos, moveDelta, dtFactor, controls);
             }
