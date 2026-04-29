@@ -213,6 +213,9 @@ namespace Vintagestory.GameContent
                     var workspace = getOrCreateContainerWorkspace(slotIndex, onEntity, onRequireSave);
                     workspace.OnInteract(bagSlot, slotIndex, onEntity, byEntity, hitPosition);
                 }
+
+                onEntity.WatchedAttributes.SetDouble("lastDismountTotalHours", Math.Max(onEntity.WatchedAttributes.GetDouble("lastDismountTotalHours"), onEntity.World.Calendar.TotalHours - onEntity.World.Calendar.HoursPerDay * 0.9));
+                onEntity.GetBehavior<EntityBehaviorTaskAI>()?.TaskManager.StopTasks();
             }
         }
 

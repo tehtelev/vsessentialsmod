@@ -265,7 +265,6 @@ namespace Vintagestory.GameContent
         private void applyQuenchedStats(IWorldAccessor world, ItemStack itemstack)
         {
             bool clayCovered = itemstack.Attributes.GetBool("clayCovered", false);
-
             int quenchIteration = itemstack.Attributes.GetInt("quenchIteration", 0);
 
             float shatterChance = GetShatterChance(world, itemstack);
@@ -273,6 +272,9 @@ namespace Vintagestory.GameContent
 
             // Diminishing returns curve: 0.1/(1+x*0.2)
             // https://pfortuny.net/fooplot.com/#W3sidHlwZSI6MCwiZXEiOiIwLjEvKDEreCowLjIpIiwiY29sb3IiOiIjMDAwMDAwIn0seyJ0eXBlIjoxMDAwLCJ3aW5kb3ciOlsiMCIsIjE1IiwiMCIsIjAuMSJdLCJzaXplIjpbNjQ4LDM5OF19XQ--
+
+            bool updateDurability = false;
+            float percentBroken = (float)collObj.GetRemainingDurability(itemstack) / collObj.GetMaxDurability(itemstack);
 
             List<AppliedCollectibleBuff> buffs = new ();
             var isBuffable = collObj.GetBehavior<CollectibleBehaviorBuffable>() != null;
@@ -283,12 +285,13 @@ namespace Vintagestory.GameContent
                 SetDurationBonus(world, itemstack, newDurability);
                 if (isBuffable)
                 {
+                    updateDurability = true;
                     buffs.Add(new AppliedCollectibleBuff()
                     {
                         Code = "hardened",
                         Multiplier = 1 + newDurability,
                         StatCode = "maxdurability"
-                    });
+                    });                    
                 }
             } else
             {
@@ -316,7 +319,8 @@ namespace Vintagestory.GameContent
             itemstack.Attributes.SetInt("quenchIteration", quenchIteration + 1);
             itemstack.Attributes.SetBool("clayCovered", false);
 
-            if(buffs.Count > 0) applyBuffs(itemstack, buffs, EnumBuffAddType.ReplaceOnDuplicate);
+            if (buffs.Count > 0) applyBuffs(itemstack, buffs, EnumBuffAddType.ReplaceOnDuplicate);
+            if (updateDurability) collObj.SetDurability(itemstack, (int)(percentBroken * collObj.GetMaxDurability(itemstack)));
         }
 
         private void applyBuffs(ItemStack stack, List<AppliedCollectibleBuff> buffs, EnumBuffAddType mode = EnumBuffAddType.AddStat)

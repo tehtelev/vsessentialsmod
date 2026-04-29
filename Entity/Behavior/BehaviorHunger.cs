@@ -234,7 +234,7 @@ namespace Vintagestory.GameContent
                 {
                     lastMoveMs = world.ElapsedMilliseconds;
                 }
-                if (controls.Sprint) sprintCounter += deltaTime;
+                if (controls.TriesToMove & controls.Sprint) sprintCounter += deltaTime; // Only apply the penalty if the player is trying to move.
             }
 
             if (hungerCounter < 0) hungerCounter = 0f; // Just in case the value is somehow negative, including from mods
@@ -245,7 +245,7 @@ namespace Vintagestory.GameContent
             {
                 // First we set up how much satiety we actually want to remove
                 var satietyDrain = 0.96f * hungerCounter; // First how much satiety to drain per total seconds
-                satietyDrain += 2.4f * sprintCounter; // Second how much satiety to drain per second we were sprinting
+                satietyDrain += 1.5f * sprintCounter; // Second how much satiety to drain per second we were sprinting
 
                 // We give a bonus when the entity is not moving
                 var isStandingStill = (world.ElapsedMilliseconds - lastMoveMs) > 3000;

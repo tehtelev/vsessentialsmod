@@ -186,7 +186,7 @@ public class EntityBehaviorHealth : EntityBehavior
     /// How many saturation points will be consumed per health point restored.
     /// </summary>
     [DocumentAsJson("Optional", "150")]
-    protected virtual float SaturationPerHealthPoint { get; set; } = 150f;
+    protected virtual float SaturationPerHealthPoint { get; set; } = 75f;
 
     /// <summary>
     /// This animation will be played if entity received more than 1hp damage. If set to 'null', animation wont be played.
