@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.Common.Collectible.Block;
@@ -327,9 +326,9 @@ namespace Vintagestory.ServerMods
                 if (flagSum.MoveX0 && path.Position.X > 0) dx--;
                 if (flagSum.MoveY0 && path.Position.Y > 0) dy--;
                 if (flagSum.MoveZ0 && path.Position.Z > 0) dz--;
-                if (flagSum.MoveX1 && path.Position.X >= schematic.SizeX) dx--;
-                if (flagSum.MoveY1 && path.Position.Y >= schematic.SizeY) dy--;
-                if (flagSum.MoveZ1 && path.Position.Z >= schematic.SizeZ) dz--;
+                if (flagSum.MoveX1 && path.Position.X >= schematicMaxX) dx--;
+                if (flagSum.MoveY1 && path.Position.Y >= schematicMaxY) dy--;
+                if (flagSum.MoveZ1 && path.Position.Z >= schematicMaxZ) dz--;
 
                 path.Position.X += dx;
                 path.Position.Z += dz;

@@ -255,7 +255,7 @@ namespace Vintagestory.GameContent
             if (saturation != null) {
                 Composers["playerstats"]
                     .AddStaticText(Lang.Get("Satiety"), CairoFont.WhiteDetailText(), leftColumnBoundsW = leftColumnBoundsW.BelowCopy())
-                    .AddDynamicText((int)saturation + " / " + (int)maxsaturation, CairoFont.WhiteDetailText(), rightColumnBoundsW = rightColumnBoundsW.FlatCopy().WithFixedPosition(rightColumnBoundsW.fixedX, leftColumnBoundsW.fixedY), "satiety")
+                    .AddDynamicText((int)Math.Round((float)saturation) + " / " + (int)Math.Round((float)maxsaturation), CairoFont.WhiteDetailText(), rightColumnBoundsW = rightColumnBoundsW.FlatCopy().WithFixedPosition(rightColumnBoundsW.fixedX, leftColumnBoundsW.fixedY), "satiety")
                 ;
             }
 
@@ -335,7 +335,6 @@ namespace Vintagestory.GameContent
                 saturation = hungerTree.TryGetFloat("currentsaturation");
                 maxSaturation = hungerTree.TryGetFloat("maxsaturation");
             }
-            if (saturation != null) saturation = (int)saturation;
         }
 
         private void UpdateStats()
@@ -354,7 +353,7 @@ namespace Vintagestory.GameContent
 
 
             if (health != null) compo.GetDynamicText("health").SetNewText((health + " / " + maxhealth));
-            if (saturation != null) compo.GetDynamicText("satiety").SetNewText((int)saturation + " / " + (int)maxsaturation);
+            if (saturation != null) compo.GetDynamicText("satiety").SetNewText((int)Math.Round((float)saturation) + " / " + (int)Math.Round((float)maxsaturation));
 
             compo.GetDynamicText("walkspeed").SetNewText((int)Math.Round(100 * walkspeed) + "%");
             compo.GetDynamicText("healeffectiveness").SetNewText((int)Math.Round(100 * healingEffectivness) + "%");
@@ -383,7 +382,7 @@ namespace Vintagestory.GameContent
                 float proteinLevel = hungerTree.GetFloat("proteinLevel");
                 float dairyLevel = hungerTree.GetFloat("dairyLevel");
 
-                compo.GetDynamicText("satiety").SetNewText((int)saturation + " / " + maxSaturation);
+                compo.GetDynamicText("satiety").SetNewText((int)Math.Round(saturation) + " / " + (int)Math.Round(maxSaturation));
 
                 Composers["playerstats"].GetStatbar("fruitBar").SetLineInterval(maxSaturation / 10);
                 Composers["playerstats"].GetStatbar("vegetableBar").SetLineInterval(maxSaturation / 10);

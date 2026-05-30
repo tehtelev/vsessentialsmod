@@ -235,6 +235,16 @@ public class AiTaskBaseConfig
     [JsonProperty] public int MaxDurationMs = 0;
 
     /// <summary>
+    /// If set, checks if the entity is at least this domesticated generation
+    /// </summary>
+    [JsonProperty] public int? MinGeneration;
+
+    /// <summary>
+    /// If set, checks if the entity is not higher than this domesticated generation
+    /// </summary>
+    [JsonProperty] public int? MaxGeneration;
+
+    /// <summary>
     /// Determines how long ago last attack should be for this task to consider being recently attacked.<br/>
     /// Is used to clear attacked-by entity.
     /// </summary>
@@ -627,6 +637,8 @@ public abstract class AiTaskBaseR : IAiTask
         if (!CheckEntityState()) return false;
         if (!CheckEmotionStates()) return false;
         if (!CheckEntityLightLevel()) return false;
+        if (Config.MinGeneration != null && entity.WatchedAttributes.GetInt("generation") < Config.MinGeneration) return false;
+        if (Config.MaxGeneration != null && entity.WatchedAttributes.GetInt("generation") > Config.MaxGeneration) return false;
 
         currentDayTimeInaccuracy = (float)entity.World.Rand.NextDouble() * Config.DayTimeFrameInaccuracy - Config.DayTimeFrameInaccuracy / 2;
 

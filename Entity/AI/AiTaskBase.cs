@@ -140,6 +140,9 @@ namespace Vintagestory.API.Common
         public string? WhenNotInEmotionState { get => WhenNotInEmotionStates?[0]; set => WhenNotInEmotionStates = value?.Split("|"); }
 
         protected long cooldownUntilMs;
+        protected int? minGeneration;
+        protected int? maxGeneration;
+
         protected double cooldownUntilTotalHours;
 
         protected WaypointsTraverser pathTraverser;
@@ -210,14 +213,18 @@ namespace Vintagestory.API.Common
             {
                 // Note that the generic type here is only used for proving the target is a class rather than a struct,
                 // and does not limit which fields will be populated
-                JsonUtil.Populate<AiTaskBase>(taskConfig.Token, this);
+                JsonUtil.Populate(taskConfig.Token, this);
             }
 
             Id = taskConfig["id"].AsString();
 
             int initialmincooldown = taskConfig["initialMinCoolDown"].AsInt(MinCooldownMs);
             int initialmaxcooldown = taskConfig["initialMaxCoolDown"].AsInt(MaxCooldownMs);
+
             cooldownUntilMs = entity.World.ElapsedMilliseconds + initialmincooldown + entity.World.Rand.Next(initialmaxcooldown - initialmincooldown);
+
+            minGeneration = taskConfig["minGeneration"].Exists ? taskConfig["minGeneration"].AsInt() : null;
+            maxGeneration = taskConfig["maxGeneration"].Exists ? taskConfig["maxGeneration"].AsInt() : null;
 
             timeout = TimeSpan.FromSeconds(taskConfig["timeoutSec"].AsDouble(defaultTimeoutSec));
 
@@ -314,6 +321,8 @@ namespace Vintagestory.API.Common
             if (WhenSwimming != null && WhenSwimming != entity.Swimming) return false;
             if (WhenInEmotionStates != null && !IsInEmotionState(WhenInEmotionStates)) return false;
             if (WhenNotInEmotionStates != null && IsInEmotionState(WhenNotInEmotionStates)) return false;
+            if (minGeneration != null && entity.WatchedAttributes.GetInt("generation") < minGeneration) return false;
+            if (maxGeneration != null && entity.WatchedAttributes.GetInt("generation") > maxGeneration) return false;
             if (!IsValidTemperature()) return false;
             if (!IsValidLightLevel()) return false;
             if (!IsInValidDayTimeHours(true)) return false;
